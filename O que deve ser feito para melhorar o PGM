@@ -47,24 +47,22 @@ import timesfm
 import ruptures as rpt
 from tirex import load_model as load_tirex_model, ForecastModel as TirexForecastModel # NOVO: Importa o TiRex
 
-# Remova a classe dataclass manual, não precisamos mais dela
-# @dataclasses.dataclass
-# class TimesFMConfig: ...
-
 # Ignora avisos comuns para uma saída mais limpa
 warnings.filterwarnings("ignore")
 
 app = Flask(__name__)
 CORS(app)  # Habilita o CORS para permitir a comunicação com o React
 
-# --- NOVO: CONFIGURAÇÃO DO MODELO CHRONOS E TOKEN ---
-# Define o token do Hugging Face (requerido para o Chronos)
-os.environ["HF_TOKEN"] = "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"
+# --- CONFIGURAÇÃO SEGURA DE TOKEN E AMBIENTE ---
+# Carrega o token do Hugging Face a partir das variáveis de ambiente do sistema.
+# ATENÇÃO: A variável de ambiente HF_TOKEN deve estar configurada no seu sistema.
+if "HF_TOKEN" not in os.environ:
+    raise ValueError("A variável de ambiente HF_TOKEN não foi encontrada. Configure-a antes de rodar a aplicação.")
 
 # Seleciona o dispositivo (GPU se disponível, senão CPU)
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
-# NOVO: CARREGAMENTO DO CHRONOS PIPELINE
+# CARREGAMENTO DO CHRONOS PIPELINE
 print("Carregando ChronosPipeline (Small)...")
 torch_dtype = torch.bfloat16 if device == "cuda" else torch.float32
 pipeline_chronos_small = None  # Inicia como None
@@ -85,7 +83,7 @@ except Exception as e:
 
 # ---------------------------------------------------
 
-# NOVO: CARREGAMENTO DO MODELO TIREX
+# CARREGAMENTO DO MODELO TIREX
 print("Carregando NX-AI/TiRex...")
 tirex_model: TirexForecastModel = None # Inicia como None
 
@@ -171,12 +169,8 @@ def remover_outliers_inteligente(df, coluna, tipo):
     Q3 = df[coluna].quantile(0.75)
     IQR = Q3 - Q1
 
-    # Para horário, usa lógica mais restritiva
-    if tipo == 'horario':
-        multiplicador = 1.3
-    else:
-        # Para outros tipos, usa lógica padrão
-        multiplicador = 1.5
+    # Para outros tipos, usa lógica padrão
+    multiplicador = 1.5
 
     limite_inferior = Q1 - multiplicador * IQR
     limite_superior = Q3 + multiplicador * IQR
@@ -204,8 +198,8 @@ def detectar_changepoint_e_filtrar(df, coluna):
     # Converte os dados da coluna para um array numpy, que a biblioteca utiliza
     pontos = df[coluna].values
     
-    # Configura o algoritmo de detecção (Pelt) com um modelo de custo (L2)
     # A penalidade (pen) controla a sensibilidade. Valores maiores = menos mudanças detectadas.
+    # pen=10 é um valor empírico que funciona bem para detectar mudanças significativas sem ser muito sensível a ruídos.
     algo = rpt.Pelt(model="l2").fit(pontos)
     pontos_de_mudanca = algo.predict(pen=10)
 
@@ -232,21 +226,8 @@ def detectar_changepoint_e_filtrar(df, coluna):
 
 def configurar_prophet_por_tipo(tipo):
     """Configura os parâmetros do Prophet baseado no tipo de dado."""
-    if tipo == 'horario':
-        # Para horário: growth logistic com limites, sazonalidade baixa
-        return {
-            'growth': 'logistic',
-            'changepoint_range': 0.9,
-            'changepoint_prior_scale': 0.3,
-            'seasonality_prior_scale': 0.5,
-            'weekly_seasonality': True,
-            'interval_width': 0.90,
-            'yearly_seasonality': False,
-            'daily_seasonality': False
-        }
-    elif tipo in ['cpu', 'sala', 'execucao']:
-        # Para CPU, Sala e Execução: growth linear livre, foco na tendência
-        return {
+    # Para CPU, Sala e Execução: growth linear livre, foco na tendência
+    return {
             'growth': 'linear',
             'changepoint_range': 0.95,
             'changepoint_prior_scale': 0.5,
@@ -255,7 +236,7 @@ def configurar_prophet_por_tipo(tipo):
             'interval_width': 0.95,
             'yearly_seasonality': False,
             'daily_seasonality': False
-        }
+    }
 
 
 def obter_ajuste_sazonal_prophet(df_treino_sazonal, coluna_y, prediction_length):
@@ -376,7 +357,10 @@ def gerar_previsao_timesfm(contexto_historico, prediction_length=7):
     # Usaremos q=0.1 (índice 0) e q=0.9 (índice 8) para o intervalo de confiança.
     # Isso resulta em um intervalo de confiança de 80%.
     quantiles_all = experimental_quantile_forecast[0]
-
+    # O output dos quantis é um array. Para um intervalo de 80%, usamos os índices:
+    # Índice 0: Quantil 0.1 (limite inferior)
+    # Índice 4: Quantil 0.5 (mediana, nossa previsão principal)
+    # Índice 8: Quantil 0.9 (limite superior)
     yhat_forecast = quantiles_all[:, 4]        # Mediana (Quantil 0.5)
     yhat_lower_forecast = quantiles_all[:, 0]  # Limite Inferior (Quantil 0.1)
     yhat_upper_forecast = quantiles_all[:, 8]  # Limite Superior (Quantil 0.9)
@@ -443,7 +427,6 @@ def gerar_grafico_interativo(tipo, nome_job):
     mapa_colunas = {
         'cpu': ('TEMPO DE CPU', 'Tempo de CPU (min)', 'royalblue'),
         'sala': ('TEMPO DE SALA', 'Tempo de Sala (min)', 'darkorange'),
-        'horario': ('HORA_NUMERICA', 'Horário da Execução', 'green'),
         'execucao': ('MINUTOS_EXECUCAO', 'Minutos desde 00:00 (min)', 'purple')
     }
 
@@ -451,15 +434,26 @@ def gerar_grafico_interativo(tipo, nome_job):
         return jsonify({"erro": "Tipo de gráfico inválido."}), 400
 
     coluna_y, label_y, cor_principal = mapa_colunas[tipo]
+    
+    # --- INÍCIO DA ADIÇÃO ---
+    # Define o Título e a Configuração do Eixo Y com base no tipo
+    if tipo == 'execucao':
+        title_grafico = f'Análise de Hora de Execução do Job: {nome_job.upper()}'
+        yaxis_config = dict(
+            range=[0, 1440],  # 24 horas * 60 minutos
+            tickmode='array',
+            tickvals=[h * 60 for h in range(0, 25, 4)],  # Marcadores a cada 4 horas
+            ticktext=[f'{h:02d}:00' for h in range(0, 25, 4)],
+            title='Horário da Execução'  # Título do EIXO Y
+        )
+    else:  # Padrão para 'cpu' e 'sala'
+        title_grafico = f'Análise de {label_y.replace("(min)", "").strip()} do Job: {nome_job.upper()}'
+        yaxis_config = dict(rangemode='tozero')
+    # --- FIM DA ADIÇÃO ---
 
-    # Processa dados específicos para horário
-    if tipo == 'horario':
-        df['HORA_NUMERICA'] = df['TIMESTAMP'].dt.hour + df['TIMESTAMP'].dt.minute / 60
-        coluna_y = 'HORA_NUMERICA'
-
-    # NOVO: Detecta o "novo normal" antes de qualquer outra análise
+    # Detecta o "novo normal" antes de qualquer outra análise
     df_segmento = detectar_changepoint_e_filtrar(df, coluna_y)
-    # NOVO: Remove timestamps duplicados para evitar erros no pandas
+    # Remove timestamps duplicados para evitar erros no pandas
     df_segmento.drop_duplicates(subset=['TIMESTAMP'], inplace=True)
     # Remove outliers de forma inteligente, AGORA USANDO O DATAFRAME CORRETO (df_segmento)
     df_treino = remover_outliers_inteligente(df_segmento, coluna_y, tipo)
@@ -467,7 +461,7 @@ def gerar_grafico_interativo(tipo, nome_job):
     # --- LÓGICA DE PREVISÃO (MODELO SELETIVO) ---
     num_dados_treino = len(df_treino)
 
-    # NOVO: Lógica de horizonte de previsão dinâmico
+    # Lógica de horizonte de previsão dinâmico
     if num_dados_treino <= 100:
         # Para poucos dados, o horizonte é metade do histórico (mínimo 7, máximo 15 dias)
         horizonte_proporcional = int(num_dados_treino / 2)
@@ -479,11 +473,15 @@ def gerar_grafico_interativo(tipo, nome_job):
     
     previsao_gerada = False  # Flag para controlar se a previsão de IA já foi feita
 
+    # Variáveis para armazenar o nome do modelo e a quantidade de dados
+    nome_modelo_utilizado = "Prophet (Fallback)"
+    quantidade_dados_modelo = num_dados_treino
+    confianca_intervalo = 0.95 # Padrão para Prophet
+
     # --- ROTEAMENTO DE MODELO PARA CPU E SALA ---
     if tipo in ['cpu', 'sala', 'execucao']:
-        modelo_usado = None
+        modelo_usado = None # Esta variável não é mais usada, mas pode ser mantida ou removida
         yhat_futuro, yhat_lower_futuro, yhat_upper_futuro = None, None, None
-        confianca_intervalo = 0.90
         contexto_historico = df_treino[coluna_y].tolist()
 
         # --- ETAPA 1: CALCULAR AJUSTE SAZONAL MENSAL COM PROPHET ---
@@ -497,11 +495,12 @@ def gerar_grafico_interativo(tipo, nome_job):
         # ETAPA 2: PREVISÃO PRINCIPAL COM CHRONOS/TIREX/TIMESFM
         if num_dados_treino <= 100: # POUCOS DADOS
             if pipeline_chronos_small is not None:
-                modelo_usado = f"Chronos-T5-Small (Poucos Dados: {num_dados_treino} <= 100)"
+                nome_modelo_utilizado = "Chronos-T5-Small"
+                quantidade_dados_modelo = num_dados_treino
                 (yhat_futuro, yhat_lower_futuro, yhat_upper_futuro) = gerar_previsao_chronos_small(
                     contexto_historico, prediction_length=prediction_length
                 )
-                confianca_intervalo = 0.90
+                confianca_intervalo = 0.90 # Chronos retorna quantis, usamos 90%
             else:
                 print(f"AVISO: Chronos solicitado para {tipo}, mas não está carregado.")
         
@@ -534,10 +533,6 @@ def gerar_grafico_interativo(tipo, nome_job):
             yhat_lower_futuro += ajuste_sazonal
             yhat_upper_futuro += ajuste_sazonal
         # -----------------------------------------------
-
-        # Se um dos modelos de IA funcionou, constrói o dataframe de previsão
-        if yhat_futuro is not None:
-            print(f"Executando análise de CPU com {modelo_usado}")
 
             # --- Lógica de construção do dataframe 'previsao' ---
             # O dataframe 'previsao' deve conter o histórico completo para a linha verde
@@ -608,11 +603,6 @@ def gerar_grafico_interativo(tipo, nome_job):
         df_prophet = df_treino[['TIMESTAMP', coluna_y]].rename(
             columns={'TIMESTAMP': 'ds', coluna_y: 'y'})
 
-        # Adiciona limites apenas para horário
-        if tipo == 'horario':
-            df_prophet['floor'] = 0
-            df_prophet['cap'] = 24
-
         # Configura o Prophet baseado no tipo
         config_prophet = configurar_prophet_por_tipo(tipo)
         modelo = Prophet(**config_prophet)
@@ -646,22 +636,8 @@ def gerar_grafico_interativo(tipo, nome_job):
 
     # Montagem do Gráfico Interativo com Plotly Graph Objects
     fig = go.Figure()
-    # --- NOVO: CAMADA PARA O HISTÓRICO IGNORADO ---
-    # Compara o dataframe original (df) com o dataframe de treino (df_treino)
-    # para encontrar os pontos que não foram usados no treinamento.
-    df_ignorado = df[~df['TIMESTAMP'].isin(df_treino['TIMESTAMP'])]
-    
-    # Adiciona a linha cinza apenas se houver dados ignorados
-    if not df_ignorado.empty:
-        fig.add_trace(go.Scatter(
-            x=df_ignorado['TIMESTAMP'],
-            y=df_ignorado[coluna_y],
-            mode='lines',
-            line=dict(color='lightgrey', width=2, dash='dot'),
-            name='Histórico Ignorado'
-        ))
-    # ------------------------------------------------
-    # Camada 1: Área de Incerteza
+
+    # --- CAMADA 1: ÁREA DE INCERTEZA ---
     fig.add_trace(go.Scatter(
         x=previsao['ds'].tolist() + previsao['ds'].tolist()[::-1],
         y=previsao['yhat_upper'].tolist() + previsao['yhat_lower'].tolist()[::-1],
@@ -669,10 +645,10 @@ def gerar_grafico_interativo(tipo, nome_job):
         fillcolor='rgba(0,100,80,0.2)',
         line=dict(color='rgba(255,255,255,0)'),
         hoverinfo="none",
-        name='Intervalo de Confiança'
+        name=f'Intervalo de Previsão'
     ))
 
-    # Camada 2: Linha de Previsão Principal
+    # --- CAMADA 2: LINHA DE PREVISÃO PRINCIPAL ---
     fig.add_trace(go.Scatter(
         x=previsao['ds'],
         y=previsao['yhat'],
@@ -681,9 +657,10 @@ def gerar_grafico_interativo(tipo, nome_job):
         name='Previsão'
     ))
 
-    # Camada 3: Pontos dos Dados Reais com hover customizado
-    # Cria textos de hover personalizados baseados no tipo
-    hover_texts = []
+    # --- CAMADA 3: PONTOS DE DADOS (REAIS E IGNORADOS) ---
+
+    # PRIMEIRO: Gera o texto do hover para TODOS os pontos do dataframe original
+    hover_texts_full = []
     for index, row in df.iterrows():
         if tipo == 'cpu':
             hover_text = (
@@ -712,26 +689,42 @@ def gerar_grafico_interativo(tipo, nome_job):
                 f"<b>Usuário:</b> {row['usuario']}<br>"
                 f"<b>Job ID:</b> {row['jobid']}"
             )
-        else:  # horario
-            hover_text = (
-                f"<b>Job:</b> {row['nome_job']}<br>"
-                f"<b>Data:</b> {row['data_execucao']}<br>"
-                f"<b>Horário:</b> {row['hora_execucao']}<br>"
-                f"<b>Return Code:</b> {row['return_code']}<br>"
-                f"<b>Usuário:</b> {row['usuario']}<br>"
-                f"<b>Job ID:</b> {row['jobid']}"
-            )
-        hover_texts.append(hover_text)
+        hover_texts_full.append(hover_text)
+    
+    # Adiciona a lista de textos como uma nova coluna para facilitar a filtragem
+    df['hover_text'] = hover_texts_full
 
+    # SEGUNDO: Plota os pontos IGNORADOS (transparentes) com seu respectivo hover text
+    df_ignorado = df[~df['TIMESTAMP'].isin(df_treino['TIMESTAMP'])].copy()
+    if not df_ignorado.empty:
+        fig.add_trace(go.Scatter(
+            x=df_ignorado['TIMESTAMP'],
+            y=df_ignorado[coluna_y],
+            mode='markers',
+            marker=dict(
+                color=cor_principal,
+                opacity=0.3,
+                size=8,
+                line=dict(width=1, color='white')
+            ),
+            name='Execuções Reais Ignoradas',
+            hovertemplate='%{text}<extra></extra>',
+            text=df_ignorado['hover_text']
+        ))
+    
+    # CORREÇÃO: Adiciona a coluna 'hover_text' ao df_treino antes de usá-la
+    df_treino = df[df['TIMESTAMP'].isin(df_treino['TIMESTAMP'])].copy()
+
+    # TERCEIRO: Plota os pontos REAIS USADOS NO TREINO (sólidos) com seu hover text
     fig.add_trace(go.Scatter(
-        x=df['TIMESTAMP'],
-        y=df[coluna_y],
+        x=df_treino['TIMESTAMP'],
+        y=df_treino[coluna_y],
         mode='markers',
         marker=dict(color=cor_principal, size=8,
                     line=dict(width=1, color='white')),
-        name='Execuções Reais',
+        name='Execuções Reais (Treino)',
         hovertemplate='%{text}<extra></extra>',
-        text=hover_texts
+        text=df_treino['hover_text']
     ))
 
     # Camada 4: Pontos de Previsão Futura
@@ -743,6 +736,9 @@ def gerar_grafico_interativo(tipo, nome_job):
     hover_texts_previsao = []
     for index, row in previsao_futura.iterrows():
         data_formatada = row['ds'].strftime('%d/%m/%Y')
+        # Novo: Informação do modelo e quantidade de dados
+        info_modelo = f"<b>Modelo Utilizado:</b> {nome_modelo_utilizado} ({quantidade_dados_modelo} dados)"
+
         if tipo == 'cpu':
             valor_formatado = f"{row['yhat']:.2f}"
             hover_text_prev = (
@@ -750,8 +746,9 @@ def gerar_grafico_interativo(tipo, nome_job):
                 f"<b>Job:</b> {nome_job}<br>"
                 f"<b>Data:</b> {data_formatada}<br>"
                 f"<b>Tempo CPU Previsto:</b> {valor_formatado}<br>"
-                f"<b>Intervalo:</b> {row['yhat_lower']:.2f} - {row['yhat_upper']:.2f}<br>"
-                f"<b>Confiança:</b> {config_prophet['interval_width']*100:.0f}%")
+                f"<b>Intervalo de Previsão:</b> {row['yhat_lower']:.2f} - {row['yhat_upper']:.2f}<br>"
+                f"{info_modelo}"
+            )
         elif tipo == 'sala':
             valor_formatado = f"{row['yhat']:.2f}"
             hover_text_prev = (
@@ -759,8 +756,9 @@ def gerar_grafico_interativo(tipo, nome_job):
                 f"<b>Job:</b> {nome_job}<br>"
                 f"<b>Data:</b> {data_formatada}<br>"
                 f"<b>Tempo Sala Previsto:</b> {valor_formatado}<br>"
-                f"<b>Intervalo:</b> {row['yhat_lower']:.2f} - {row['yhat_upper']:.2f}<br>"
-                f"<b>Confiança:</b> {config_prophet['interval_width']*100:.0f}%")
+                f"<b>Intervalo de Previsão:</b> {row['yhat_lower']:.2f} - {row['yhat_upper']:.2f}<br>"
+                f"{info_modelo}"
+            )
         elif tipo == 'execucao':
             # Função auxiliar para formatar minutos em HH:MM
             def formatar_minutos_para_horario(minutos_float):
@@ -780,26 +778,10 @@ def gerar_grafico_interativo(tipo, nome_job):
                 f"<b>Job:</b> {nome_job}<br>"
                 f"<b>Data:</b> {data_formatada}<br>"
                 f"<b>Hora de Execução Prevista:</b> {valor_formatado}<br>"
-                f"<b>Intervalo:</b> {intervalo_inicio} - {intervalo_fim}<br>"
-                f"<b>Confiança:</b> {config_prophet['interval_width']*100:.0f}%")
-        else:  # horario
-            # Função auxiliar para formatar horário
-            def formatar_horario(valor_decimal):
-                horas = int(valor_decimal)
-                minutos = int((valor_decimal % 1) * 60)
-                return f"{horas:02d}:{minutos:02d}"
-
-            valor_formatado = formatar_horario(row['yhat'])
-            intervalo_inicio = formatar_horario(row['yhat_lower'])
-            intervalo_fim = formatar_horario(row['yhat_upper'])
-
-            hover_text_prev = (
-                f"<b>PREVISÃO</b><br>"
-                f"<b>Job:</b> {nome_job}<br>"
-                f"<b>Data:</b> {data_formatada}<br>"
-                f"<b>Horário Previsto:</b> {valor_formatado}<br>"
-                f"<b>Intervalo:</b> {intervalo_inicio} - {intervalo_fim}<br>"
-                f"<b>Confiança:</b> {config_prophet['interval_width']*100:.0f}%")
+                f"<b>Intervalo de Previsão:</b> {intervalo_inicio} - {intervalo_fim}<br>"
+                f"{info_modelo}"
+            )
+        
         hover_texts_previsao.append(hover_text_prev)
 
     # Adiciona os pontos de previsão futura apenas se existirem
@@ -819,37 +801,22 @@ def gerar_grafico_interativo(tipo, nome_job):
             text=hover_texts_previsao
         ))
 
-    # Configuração específica do eixo Y e título do gráfico
-    yaxis_config = dict(rangemode='tozero')
-    title_grafico = f'Análise de {coluna_y.replace("_", " ").title()} do Job: {nome_job.upper()}'
+    # --- Customização Final do Layout ---
+    # DEBUG: Imprime o valor final do título no console para depuração.
+    # Por favor, verifique o terminal onde o Flask está rodando ao carregar o gráfico.
+    print("--- INFORMAÇÃO DE DEBUG ---")
+    print(f"Tipo de Gráfico Solicitado: '{tipo}'")
+    print(f"Título Final a ser Aplicado ao Gráfico: '{title_grafico}'")
+    print("--------------------------")
 
-    if tipo == 'horario':
-        # Formatar o eixo Y para mostrar horários (lógica existente)
-        yaxis_config = dict(
-            range=[0, 24],
-            tickmode='array',
-            tickvals=list(range(0, 25, 2)),  # A cada 2 horas
-            ticktext=[f'{h:02d}:00' for h in range(0, 25, 2)],
-            title='Horário da Execução'
-        )
-
-    # Adiciona a formatação para o gráfico de execução
-    if tipo == 'execucao':
-        # Formatar o eixo Y para mostrar horários a partir dos minutos
-        yaxis_config = dict(
-            range=[0, 1440],  # 24 horas * 60 minutos
-            tickmode='array',
-            # Marcadores a cada 4 horas
-            tickvals=[h * 60 for h in range(0, 25, 4)],
-            ticktext=[f'{h:02d}:00' for h in range(0, 25, 4)],
-            title='Horário da Execução'
-        )
-        # Ajusta o título principal do gráfico para refletir o conteúdo
-        title_grafico = f'Análise de Hora de Execução do Job: {nome_job.upper()}'
-
-    # Customização Final do Layout
     fig.update_layout(
-        title=title_grafico,
+        title=dict(
+            text=title_grafico,
+            y=0.98,
+            x=0.05,          # Posição X movida para a ESQUERDA
+            xanchor='left',  # Âncora do título na ESQUERDA
+            yanchor='top'
+        ),
         xaxis_title='Data da Execução',
         yaxis_title=label_y,
         yaxis=yaxis_config,
@@ -858,11 +825,12 @@ def gerar_grafico_interativo(tipo, nome_job):
             orientation="h",
             yanchor="bottom",
             y=1.02,
-            xanchor="right",
-            x=1
+            x=0.95,          # Posição X movida para a DIREITA
+            xanchor="right"  # Âncora da legenda na DIREITA
         ),
         hovermode='closest'
     )
+
 
     # Converte a figura para JSON e a retorna
     return pio.to_json(fig)
