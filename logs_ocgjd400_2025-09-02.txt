@@ -1,21 +1,872 @@
-NOME DO JOB	DATA DE EXECUÇÃO	HORA DE EXECUÇÃO	TEMPO DE CPU	TEMPO DE SALA	RETURN CODE	USUARIO	JOBID
-OCGJD400	03/06/2025	05.18.26	276,47	345,83	0000	USRIWPRD	36351
-OCGJD400	04/06/2025	05.34.32	286,58	366,49	0000	USRIWPRD	55207
-OCGJD400	05/06/2025	05.08.09	285,20	351,08	0000	USRIWPRD	74505
-OCGJD400	06/06/2025	03.55.28	323,31	411,88	0000	USRIWPRD	93009
-OCGJD400	07/06/2025	03.55.43	329,88	441,67	0000	USRIWPRD	11913
-OCGJD400	10/06/2025	03.55.59	330,01	426,60	0000	USRIWPRD	43335
-OCGJD400	11/06/2025	03.55.31	329,61	422,11	0000	USRIWPRD	62186
-OCGJD400	12/06/2025	03.56.24	330,78	413,37	0000	USRIWPRD	81757
-OCGJD400	13/06/2025	03.54.19	38,38	54,31	0000	USRIWPRD	725
-OCGJD400	14/06/2025	03.53.29	37,27	67,14	0000	USRIWPRD	19528
-OCGJD400	17/06/2025	03.45.46	36,47	46,46	0000	USRIWPRD	49503
-OCGJD400	18/06/2025	03.46.01	36,66	50,45	0000	USRIWPRD	67954
-OCGJD400	19/06/2025	03.46.04	36,87	56,82	0000	USRIWPRD	86787
-OCGJD400	21/06/2025	03.46.34	37,58	57,38	0000	USRIWPRD	11820
-OCGJD400	24/06/2025	03.45.47	36,86	56,47	0000	USRIWPRD	41965
-OCGJD400	25/06/2025	03.46.55	51,93	71,05	0000	USRIWPRD	60521
-OCGJD400	26/06/2025	03.47.53	52,76	83,48	0000	USRIWPRD	79043
-OCGJD400	27/06/2025	03.47.29	27,29	35,55	0000	USRIWPRD	97907
-OCGJD400	28/06/2025	03.47.03	11,85	17,91	0000	USRIWPRD	16696
-OCGJD400	01/07/2025	04.10.02	12,14	18,06	0000	USRIWPRD	47310
+O que deve ser resolvido:
+
+Tratar Execuções com Falha 
+Lidar com Múltiplas Execuções no Mesmo Dia
+
+
+
+vamos começar pelo Tratar Execuções com Falha
+
+Existem jobs que terminam com return code 00 até 07 e não são considerados cancelamentos
+Mas também existem job que o return code diferente de 00 é considerado cancelamento
+Tem situação que um job processa o step01 até 06, por exemplo, e cancela no step07, depois em outro momento é reprocessado e continua do step07 até o step10.
+Existem situações que um job fica em loop e termina com RC 08 ou maior e depois é reprocessado
+Existem situações que um job termina com 00, mas ele não fez o que deveria e entao é reprocessado e termina novamente com 00.
+
+Essas são algumas situações que lembrei e ocorrem com os jobs, quais seriam as melhores soluções para resolver esses problemas no codigo
+
+
+
+
+
+Sempre antes de escrever o código, deixe ele formatado para somente eu copiar e colar no código e não precisar ficar alinhando nada.
+Preste atenção e escreva em formato de código python e não de texto.
+Não escreva o código completo, diga o antes e depois de como você vai mudar, seja especifico e digite tudo o que vai ser alterado
+
+
+
+Vou detalhar todos meus codigos usados abaixo:
+
+app.py:
+
+# app.py
+
+import pandas as pd
+from flask import Flask, jsonify
+from flask_cors import CORS
+import plotly.graph_objects as go
+import plotly.io as pio
+from prophet import Prophet
+import warnings
+import os
+import torch
+import numpy as np
+import traceback
+from chronos import ChronosPipeline
+import timesfm
+import ruptures as rpt
+from tirex import load_model as load_tirex_model, ForecastModel as TirexForecastModel # NOVO: Importa o TiRex
+
+# Remova a classe dataclass manual, não precisamos mais dela
+# @dataclasses.dataclass
+# class TimesFMConfig: ...
+
+# Ignora avisos comuns para uma saída mais limpa
+warnings.filterwarnings("ignore")
+
+app = Flask(__name__)
+CORS(app)  # Habilita o CORS para permitir a comunicação com o React
+
+# --- NOVO: CONFIGURAÇÃO DO MODELO CHRONOS E TOKEN ---
+# Define o token do Hugging Face (requerido para o Chronos)
+os.environ["HF_TOKEN"] = "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"
+
+# Seleciona o dispositivo (GPU se disponível, senão CPU)
+device = "cuda" if torch.cuda.is_available() else "cpu"
+
+# NOVO: CARREGAMENTO DO CHRONOS PIPELINE
+print("Carregando ChronosPipeline (Small)...")
+torch_dtype = torch.bfloat16 if device == "cuda" else torch.float32
+pipeline_chronos_small = None  # Inicia como None
+
+try:
+    pipeline_chronos_small = ChronosPipeline.from_pretrained(
+        "amazon/chronos-t5-small",
+        device_map=device,
+        torch_dtype=torch_dtype
+    )
+    print("Pipeline Chronos (Small) carregado com sucesso.")
+except Exception as e:
+    print(f"ERRO CRÍTICO ao carregar ChronosPipeline: {e}")
+    print("--- TRACEBACK DO ERRO DO PIPELINE CHRONOS ---")
+    traceback.print_exc()
+    print("-------------------------------------------")
+    # pipeline_chronos_small já é None
+
+# ---------------------------------------------------
+
+# NOVO: CARREGAMENTO DO MODELO TIREX
+print("Carregando NX-AI/TiRex...")
+tirex_model: TirexForecastModel = None # Inicia como None
+
+try:
+    # O TiRex requer GPU com compute capability >= 8.0, mas carregamos de qualquer forma
+    # e o erro ocorrerá no uso se o hardware não for compatível.
+    tirex_model = load_tirex_model("NX-AI/TiRex")
+    print("Modelo TiRex carregado com sucesso.")
+except Exception as e:
+    print(f"ERRO CRÍTICO ao carregar TiRex: {e}")
+    print("--- TRACEBACK DO ERRO DO TIREX ---")
+    traceback.print_exc()
+    print("----------------------------------")
+    tirex_model = None
+# ---------------------------------------------------
+
+
+# CARREGAMENTO DO MODELO TIMESFM (SEGUINDO A NOVA DOCUMENTAÇÃO OFICIAL)
+print("Carregando TimesFM (200m)...")
+tfm = None
+
+try:
+    backend_device = "gpu" if torch.cuda.is_available() else "cpu"
+
+    # Inicialização conforme a nova API do TimesFM
+    tfm = timesfm.TimesFm(
+        hparams=timesfm.TimesFmHparams(
+            backend=backend_device,
+            # Parâmetros específicos para o modelo 1.0, conforme documentação
+            context_len=512,
+            horizon_len=7, # Nosso horizonte de previsão padrão
+        ),
+        checkpoint=timesfm.TimesFmCheckpoint(
+            huggingface_repo_id="google/timesfm-1.0-200m-pytorch"),
+    )
+    print("Modelo TimesFM carregado com sucesso.")
+except Exception as e:
+    print(f"ERRO CRÍTICO ao carregar TimesFM: {e}")
+    print("--- TRACEBACK DO ERRO DO TIMESFM ---")
+    traceback.print_exc()
+    print("------------------------------------")
+    tfm = None
+
+# ---------------------------------------------------
+
+
+def carregar_dados_job(nome_job):
+    """Carrega e processa os dados de um job específico do arquivo JSON."""
+    try:
+        # Assume que dados_mock.json está na mesma pasta que app.py
+        df_full = pd.read_json('dados_mock.json')
+        df = df_full[df_full['nome_job'] == nome_job].copy()
+
+        if df.empty:
+            return None
+
+        # Converte as colunas de tempo para número, transformando erros em 'NaN' (Not a Number)
+        df['TEMPO DE CPU'] = pd.to_numeric(
+            df['tempo_cpu'].str.replace(',', '.'), errors='coerce')
+        df['TEMPO DE SALA'] = pd.to_numeric(
+            df['tempo_sala'].str.replace(',', '.'), errors='coerce')
+
+        # Remove as linhas que resultaram em erro (agora são 'NaN')
+        df.dropna(subset=['TEMPO DE CPU', 'TEMPO DE SALA'], inplace=True)
+        df['TIMESTAMP'] = pd.to_datetime(
+            df['data_execucao'] + ' ' + df['hora_execucao'], format='%d/%m/%Y %H.%M.%S')
+        # Converte hora_execucao (formato HH.MM.SS) para minutos totais de execução
+        hora_parts = df['hora_execucao'].str.split('.', expand=True)
+        df['MINUTOS_EXECUCAO'] = hora_parts[0].astype(int) * 60 + hora_parts[1].astype(int) + hora_parts[2].astype(int) / 60
+        df = df.sort_values(by='TIMESTAMP').reset_index(drop=True)
+        return df
+    except FileNotFoundError:
+        return None
+
+
+def remover_outliers_inteligente(df, coluna, tipo):
+    """Remove outliers de forma inteligente baseada no tipo de dado."""
+    if len(df) < 10:  # Não remove outliers se tiver poucos dados
+        return df
+
+    # Usa IQR (Interquartile Range) para remoção mais eficaz de outliers
+    Q1 = df[coluna].quantile(0.25)
+    Q3 = df[coluna].quantile(0.75)
+    IQR = Q3 - Q1
+
+    # Para horário, usa lógica mais restritiva
+    if tipo == 'horario':
+        multiplicador = 1.3
+    else:
+        # Para outros tipos, usa lógica padrão
+        multiplicador = 1.5
+
+    limite_inferior = Q1 - multiplicador * IQR
+    limite_superior = Q3 + multiplicador * IQR
+
+    df_filtrado = df[
+        (df[coluna] >= limite_inferior) & (df[coluna] <= limite_superior)
+    ].copy()
+
+    outliers_removidos = len(df) - len(df_filtrado)
+    if outliers_removidos > 0:
+        print(
+            f"Para '{coluna}' ({tipo}), foram removidos {outliers_removidos} outliers do treinamento.")
+
+    return df_filtrado
+
+def detectar_changepoint_e_filtrar(df, coluna):
+    """
+    Detecta o ponto de mudança mais recente na série temporal e, se for significativo,
+    filtra o DataFrame para usar apenas os dados após essa mudança.
+    """
+    # Só executa se tivermos um volume mínimo de dados para a análise fazer sentido
+    if len(df) < 30:
+        return df
+
+    # Converte os dados da coluna para um array numpy, que a biblioteca utiliza
+    pontos = df[coluna].values
+    
+    # Configura o algoritmo de detecção (Pelt) com um modelo de custo (L2)
+    # A penalidade (pen) controla a sensibilidade. Valores maiores = menos mudanças detectadas.
+    algo = rpt.Pelt(model="l2").fit(pontos)
+    pontos_de_mudanca = algo.predict(pen=10)
+
+    # O resultado inclui o final da série, então o removemos se ele estiver lá.
+    # Ex: [50, 134] significa que a primeira série vai de 0-49 e a nova começa em 50.
+    if len(pontos_de_mudanca) > 1:
+        # Pega o início do último segmento (o ponto de mudança mais recente)
+        ultimo_ponto_de_mudanca = pontos_de_mudanca[-2]
+        tamanho_ultimo_segmento = len(df) - ultimo_ponto_de_mudanca
+
+        print(f"Ponto de mudança detectado no índice {ultimo_ponto_de_mudanca}. "
+              f"O novo segmento tem {tamanho_ultimo_segmento} pontos.")
+
+        # Define um tamanho mínimo para o novo segmento ser considerado válido para treinamento
+        MIN_SEGMENTO_PARA_TREINO = 5
+        if tamanho_ultimo_segmento >= MIN_SEGMENTO_PARA_TREINO:
+            print(f"O último segmento é grande o suficiente. "
+                  f"O treinamento usará apenas os dados a partir de {df['TIMESTAMP'].iloc[ultimo_ponto_de_mudanca].date()}.")
+            return df.iloc[ultimo_ponto_de_mudanca:].reset_index(drop=True)
+        else:
+            print("O último segmento é muito curto. Usando o histórico completo para a análise.")
+            
+    return df
+
+def configurar_prophet_por_tipo(tipo):
+    """Configura os parâmetros do Prophet baseado no tipo de dado."""
+    if tipo == 'horario':
+        # Para horário: growth logistic com limites, sazonalidade baixa
+        return {
+            'growth': 'logistic',
+            'changepoint_range': 0.9,
+            'changepoint_prior_scale': 0.3,
+            'seasonality_prior_scale': 0.5,
+            'weekly_seasonality': True,
+            'interval_width': 0.90,
+            'yearly_seasonality': False,
+            'daily_seasonality': False
+        }
+    elif tipo in ['cpu', 'sala', 'execucao']:
+        # Para CPU, Sala e Execução: growth linear livre, foco na tendência
+        return {
+            'growth': 'linear',
+            'changepoint_range': 0.95,
+            'changepoint_prior_scale': 0.5,
+            'seasonality_prior_scale': 3.0,  # Sazonalidade moderada
+            'weekly_seasonality': True,
+            'interval_width': 0.95,
+            'yearly_seasonality': False,
+            'daily_seasonality': False
+        }
+
+
+def obter_ajuste_sazonal_prophet(df_treino_sazonal, coluna_y, prediction_length):
+    """
+    Usa o Prophet para modelar APENAS a sazonalidade MENSAL automática
+    e retorna o valor de ajuste para os dias futuros.
+    """
+    # Só executa se tivermos dados suficientes para o Prophet aprender o padrão
+    if len(df_treino_sazonal) < 60: # Pelo menos 2 meses de dados
+        print("Dados insuficientes para análise sazonal mensal. Nenhum ajuste será feito.")
+        return np.zeros(prediction_length)
+
+    print("Calculando ajuste sazonal MENSAL com Prophet...")
+    
+    # Prepara o dataframe para o Prophet
+    df_prophet = df_treino_sazonal[['TIMESTAMP', coluna_y]].rename(
+        columns={'TIMESTAMP': 'ds', coluna_y: 'y'})
+
+    # --- Configuração do Prophet para atuar como ESPECIALISTA SAZONAL MENSAL ---
+    # Desligamos a tendência e outras sazonalidades para focar apenas na mensal.
+    modelo_sazonal = Prophet(
+        growth='flat',                  # Sem tendência de crescimento
+        yearly_seasonality=False,
+        weekly_seasonality=False,
+        daily_seasonality=False
+    )
+    # Adicionamos a sazonalidade mensal manualmente, o que é mais compatível
+    modelo_sazonal.add_seasonality(name='monthly', period=30.5, fourier_order=5)
+    
+    modelo_sazonal.fit(df_prophet)
+
+    # Cria o dataframe futuro
+    futuro = modelo_sazonal.make_future_dataframe(periods=prediction_length)
+    
+    # Faz a previsão dos componentes
+    previsao_componentes = modelo_sazonal.predict(futuro)
+
+    # Retorna APENAS o valor do componente 'monthly' para os dias futuros
+    ajuste = previsao_componentes.tail(prediction_length)['monthly'].values
+    print(f"Ajuste sazonal MENSAL para os próximos {prediction_length} dias: {ajuste}")
+    return ajuste
+
+# --- NOVA FUNÇÃO AUXILIAR (VERSÃO PIPELINE) ---
+
+def gerar_previsao_chronos_small(contexto_historico, prediction_length=7, num_samples=20):
+    """
+    Gera previsões probabilísticas usando o ChronosPipeline.
+    O pipeline retorna diretamente tensores numéricos (não tokens de texto).
+    """
+    # Garante que o pipeline tenha carregado. Se não, retorna NaNs
+    if pipeline_chronos_small is None:
+        print("ERRO: O Pipeline Chronos não foi carregado. Retornando previsão vazia.")
+        nan_array = [np.nan] * prediction_length
+        return nan_array, nan_array, nan_array
+
+    # 1. Preparar o contexto: O pipeline espera um tensor PyTorch.
+    # Nossa 'contexto_historico' é uma lista Python.
+    context_tensor = torch.tensor(
+        contexto_historico, dtype=torch.float32).to(device)
+
+    # 2. Gerar previsão. O pipeline faz a amostragem (num_samples) internamente.
+    # O output tem shape [batch_size (1), num_samples, prediction_length]
+    forecast = pipeline_chronos_small.predict(
+        context_tensor.unsqueeze(
+            0),  # Adiciona a dimensão de batch (shape [1, context_length])
+        prediction_length,
+        num_samples=num_samples
+    )
+
+    # 3. Processar o output. O output JÁ É NUMÉRICO.
+    # Pegamos o primeiro (e único) item do batch: forecast[0]
+    # Isso nos dá um array de shape [num_samples, prediction_length]
+    # Movemos para CPU (se estava na GPU) e convertemos para Numpy para calcular quantis
+    samples_array = forecast[0].cpu().numpy()
+
+    # 4. Calcular os quantis (Intervalo de 90% = 0.05 e 0.95. Mediana = 0.5)
+    # axis=0 significa que calculamos os quantis "verticalmente" (através de todas as amostras)
+    # para cada um dos 7 dias previstos.
+    yhat_forecast = np.quantile(samples_array, 0.5, axis=0)
+    yhat_lower_forecast = np.quantile(samples_array, 0.05, axis=0)
+    yhat_upper_forecast = np.quantile(samples_array, 0.95, axis=0)
+
+    return yhat_forecast, yhat_lower_forecast, yhat_upper_forecast
+
+# --- FIM DA NOVA FUNÇÃO ---
+
+# --- NOVA FUNÇÃO AUXILIAR PARA PREVISÃO COM TIMESFM ---
+def gerar_previsao_timesfm(contexto_historico, prediction_length=7):
+    """
+    Gera previsões usando o modelo TimesFM.
+    Retorna a previsão pontual (mediana) e um intervalo de confiança de 80%.
+    """
+    # Garante que o modelo TimesFM tenha carregado.
+    if tfm is None:
+        print("ERRO: O modelo TimesFM não foi carregado. Retornando previsão vazia.")
+        nan_array = np.full(prediction_length, np.nan)
+        return nan_array, nan_array, nan_array
+
+    # 1. Preparar o contexto: TimesFM espera uma lista de arrays numpy.
+    contexto_array = np.array(contexto_historico)
+    forecast_input = [contexto_array]
+
+    # 2. Definir a frequência. Como são dados de execuções diárias, usamos 0.
+    frequency_input = [0]
+    
+    # 3. Gerar previsão.
+    # CORREÇÃO: Ajustamos o 'horizon_len' do objeto de hiperparâmetros (hparams)
+    # antes de chamar a previsão. Removemos o 'forecast_len'.
+    tfm.hparams.horizon_len = prediction_length
+    point_forecast, experimental_quantile_forecast = tfm.forecast(
+        forecast_input,
+        freq=frequency_input,
+    )
+
+    # 4. Processar o output.
+    # Os quantis padrão do TimesFM são [0.1, 0.2, ..., 0.9].
+    # Usaremos q=0.5 (índice 4) para a mediana (yhat).
+    # Usaremos q=0.1 (índice 0) e q=0.9 (índice 8) para o intervalo de confiança.
+    # Isso resulta em um intervalo de confiança de 80%.
+    quantiles_all = experimental_quantile_forecast[0]
+
+    yhat_forecast = quantiles_all[:, 4]        # Mediana (Quantil 0.5)
+    yhat_lower_forecast = quantiles_all[:, 0]  # Limite Inferior (Quantil 0.1)
+    yhat_upper_forecast = quantiles_all[:, 8]  # Limite Superior (Quantil 0.9)
+
+    return yhat_forecast, yhat_lower_forecast, yhat_upper_forecast
+# --- FIM DA NOVA FUNÇÃO ---
+
+# --- NOVA FUNÇÃO AUXILIAR PARA PREVISÃO COM TIREX ---
+def gerar_previsao_tirex(contexto_historico, prediction_length=7, num_samples=100):
+    """
+    Gera previsões probabilísticas usando o modelo NX-AI/TiRex.
+    """
+    # Garante que o modelo TiRex tenha carregado.
+    if tirex_model is None:
+        print("ERRO: O modelo TiRex não foi carregado. Retornando previsão vazia.")
+        nan_array = np.full(prediction_length, np.nan)
+        return nan_array, nan_array, nan_array
+        
+    try:
+        # 1. Preparar o contexto: TiRex espera um tensor PyTorch com dimensão de batch.
+        # [batch_size, context_length]
+        context_tensor = torch.tensor(
+            contexto_historico, dtype=torch.float32).unsqueeze(0)
+
+        # 2. Gerar previsão. O modelo retorna os quantis e a média diretamente.
+        quantiles, mean = tirex_model.forecast(
+            context=context_tensor,
+            prediction_length=prediction_length
+        )
+
+        # 3. Processar o output. A saída 'quantiles' tem shape [batch_size (1), prediction_length, num_quantiles]
+        # Pegamos o primeiro item do batch e convertemos para Numpy.
+        quantiles_array = quantiles[0].cpu().numpy()
+
+        # 4. Selecionar os quantis para o intervalo de confiança.
+        # Assim como o TimesFM, vamos assumir que ele retorna 9 quantis (0.1, 0.2 ... 0.9)
+        # Usaremos o quantil 0.5 (índice 4) para a mediana e 0.1/0.9 para o intervalo (80% de confiança).
+        yhat_forecast = quantiles_array[:, 4]       # Mediana (Quantil 0.5)
+        yhat_lower_forecast = quantiles_array[:, 0] # Limite Inferior (Quantil 0.1)
+        yhat_upper_forecast = quantiles_array[:, 8] # Limite Superior (Quantil 0.9)
+
+        return yhat_forecast, yhat_lower_forecast, yhat_upper_forecast
+
+    except Exception as e:
+        print(f"ERRO CRÍTICO durante a previsão com TiRex: {e}")
+        print("--- TRACEBACK DO ERRO DO TIREX FORECAST ---")
+        traceback.print_exc()
+        print("-----------------------------------------")
+        nan_array = np.full(prediction_length, np.nan)
+        return nan_array, nan_array, nan_array
+# --- FIM DA NOVA FUNÇÃO ---
+
+@app.route("/api/grafico/<tipo>/<nome_job>")
+def gerar_grafico_interativo(tipo, nome_job):
+    """
+    Rota principal que gera e retorna o JSON de um gráfico interativo com previsão Prophet.
+    """
+    df = carregar_dados_job(nome_job)
+
+    if df is None or len(df) < 5:
+        return jsonify({"erro": "Job não encontrado ou dados insuficientes."}), 404
+
+    # Define qual coluna usar com base no tipo de gráfico solicitado
+    mapa_colunas = {
+        'cpu': ('TEMPO DE CPU', 'Tempo de CPU (min)', 'royalblue'),
+        'sala': ('TEMPO DE SALA', 'Tempo de Sala (min)', 'darkorange'),
+        'horario': ('HORA_NUMERICA', 'Horário da Execução', 'green'),
+        'execucao': ('MINUTOS_EXECUCAO', 'Minutos desde 00:00 (min)', 'purple')
+    }
+
+    if tipo not in mapa_colunas:
+        return jsonify({"erro": "Tipo de gráfico inválido."}), 400
+
+    coluna_y, label_y, cor_principal = mapa_colunas[tipo]
+
+    # Processa dados específicos para horário
+    if tipo == 'horario':
+        df['HORA_NUMERICA'] = df['TIMESTAMP'].dt.hour + df['TIMESTAMP'].dt.minute / 60
+        coluna_y = 'HORA_NUMERICA'
+
+    # NOVO: Detecta o "novo normal" antes de qualquer outra análise
+    df_segmento = detectar_changepoint_e_filtrar(df, coluna_y)
+    # NOVO: Remove timestamps duplicados para evitar erros no pandas
+    df_segmento.drop_duplicates(subset=['TIMESTAMP'], inplace=True)
+    # Remove outliers de forma inteligente, AGORA USANDO O DATAFRAME CORRETO (df_segmento)
+    df_treino = remover_outliers_inteligente(df_segmento, coluna_y, tipo)
+
+    # --- LÓGICA DE PREVISÃO (MODELO SELETIVO) ---
+    num_dados_treino = len(df_treino)
+
+    # NOVO: Lógica de horizonte de previsão dinâmico
+    if num_dados_treino <= 100:
+        # Para poucos dados, o horizonte é metade do histórico (mínimo 7, máximo 15 dias)
+        horizonte_proporcional = int(num_dados_treino / 2)
+        prediction_length = max(7, min(horizonte_proporcional, 15))
+        print(f"Horizonte de previsão dinâmico para poucos dados ({num_dados_treino}): {prediction_length} dias.")
+    else:
+        # Para dados médios e grandes, usamos o horizonte completo de 30 dias
+        prediction_length = 30
+    
+    previsao_gerada = False  # Flag para controlar se a previsão de IA já foi feita
+
+    # --- ROTEAMENTO DE MODELO PARA CPU E SALA ---
+    if tipo in ['cpu', 'sala', 'execucao']:
+        modelo_usado = None
+        yhat_futuro, yhat_lower_futuro, yhat_upper_futuro = None, None, None
+        confianca_intervalo = 0.90
+        contexto_historico = df_treino[coluna_y].tolist()
+
+        # --- ETAPA 1: CALCULAR AJUSTE SAZONAL MENSAL COM PROPHET ---
+        # Usamos o df_segmento para dar ao Prophet o máximo de histórico possível
+        # para aprender o padrão mensal, mesmo que o modelo principal use menos dados.
+        ajuste_sazonal = obter_ajuste_sazonal_prophet(
+            df_segmento, coluna_y, prediction_length
+        )
+        # ----------------------------------------------------------------
+
+        # ETAPA 2: PREVISÃO PRINCIPAL COM CHRONOS/TIREX/TIMESFM
+        if num_dados_treino <= 100: # POUCOS DADOS
+            if pipeline_chronos_small is not None:
+                modelo_usado = f"Chronos-T5-Small (Poucos Dados: {num_dados_treino} <= 100)"
+                (yhat_futuro, yhat_lower_futuro, yhat_upper_futuro) = gerar_previsao_chronos_small(
+                    contexto_historico, prediction_length=prediction_length
+                )
+                confianca_intervalo = 0.90
+            else:
+                print(f"AVISO: Chronos solicitado para {tipo}, mas não está carregado.")
+        
+        elif 100 < num_dados_treino <= 200: # MÉDIOS DADOS (NOVO BLOCO)
+            if tirex_model is not None:
+                modelo_usado = f"NX-AI/TiRex (Médios Dados: {num_dados_treino})"
+                (yhat_futuro, yhat_lower_futuro, yhat_upper_futuro) = gerar_previsao_tirex(
+                    contexto_historico, prediction_length=prediction_length
+                )
+                confianca_intervalo = 0.80 # TiRex retorna quantis, usamos 90%
+            else:
+                print(f"AVISO: TiRex solicitado para {tipo}, mas não está carregado.")
+
+        else: # GRANDES DADOS (ACIMA DE 200) - Mantendo TimesFM por enquanto
+            if tfm is not None:
+                # O modelo Moirai será implementado aqui posteriormente. Por enquanto, usamos TimesFM.
+                modelo_usado = f"TimesFM-200M (Grandes Dados: {num_dados_treino} > 200)"
+                (yhat_futuro, yhat_lower_futuro, yhat_upper_futuro) = gerar_previsao_timesfm(
+                    contexto_historico, prediction_length=prediction_length
+                )
+                confianca_intervalo = 0.80
+            else:
+                print(f"AVISO: TimesFM solicitado para {tipo}, mas não está carregado.")
+
+        # --- ETAPA 3: COMBINAR AS PREVISÕES ---
+        # Se a previsão principal foi gerada com sucesso, somamos o ajuste sazonal
+        if yhat_futuro is not None:
+            print(f"Executando análise de '{tipo}' com {modelo_usado}")
+            yhat_futuro += ajuste_sazonal
+            yhat_lower_futuro += ajuste_sazonal
+            yhat_upper_futuro += ajuste_sazonal
+        # -----------------------------------------------
+
+        # Se um dos modelos de IA funcionou, constrói o dataframe de previsão
+        if yhat_futuro is not None:
+            print(f"Executando análise de CPU com {modelo_usado}")
+
+            # --- Lógica de construção do dataframe 'previsao' ---
+            # O dataframe 'previsao' deve conter o histórico completo para a linha verde
+            # E os valores futuros previstos.
+
+            # Passo 1: Começamos com o histórico COMPLETO, mas sem valores de previsão.
+            # Usamos o dataframe original (df_segmento) ANTES da remoção de outliers para pegar todas as datas.
+            previsao = df_segmento[['TIMESTAMP']].copy()
+            previsao.rename(columns={'TIMESTAMP': 'ds'}, inplace=True)
+            
+            # Adicionamos colunas de previsão, inicialmente vazias (NaN)
+            previsao['yhat'] = np.nan
+            previsao['yhat_lower'] = np.nan
+            previsao['yhat_upper'] = np.nan
+
+            # Passo 2: Preenchemos os valores 'yhat' para o período de TREINO
+            # O 'yhat' do período histórico é simplesmente o valor real que o modelo viu.
+            # Usamos 'df_treino' para isso.
+            previsao.set_index('ds', inplace=True)
+            df_treino_com_indice = df_treino.set_index('TIMESTAMP')
+            previsao.update(df_treino_com_indice.rename(columns={coluna_y: 'yhat'}))
+            previsao.reset_index(inplace=True)
+
+            # Preenchemos também os intervalos de confiança para o período de treino
+            previsao.loc[previsao['ds'].isin(df_treino['TIMESTAMP']), 'yhat_lower'] = previsao['yhat']
+            previsao.loc[previsao['ds'].isin(df_treino['TIMESTAMP']), 'yhat_upper'] = previsao['yhat']
+            
+            # Passo 3: Criar e adicionar os dados da PREVISÃO FUTURA
+            ultimo_timestamp_real = df_treino['TIMESTAMP'].max()
+            datas_futuras = pd.date_range(
+                start=ultimo_timestamp_real + pd.Timedelta(days=1),
+                periods=prediction_length, freq='D'
+            )
+            df_previsao_futuro = pd.DataFrame({
+                'ds': datas_futuras, 'yhat': yhat_futuro,
+                'yhat_lower': yhat_lower_futuro, 'yhat_upper': yhat_upper_futuro,
+            })
+            
+            # Passo 4: Combinar o histórico preenchido com o futuro
+            previsao = pd.concat([previsao, df_previsao_futuro], ignore_index=True)
+            previsao = previsao.dropna(subset=['yhat']).reset_index(drop=True) # Remove linhas sem previsão
+
+            # Pós-processamento para garantir que não haja valores negativos
+            minimo_real = df_treino.loc[df_treino[coluna_y] > 0, coluna_y].min()
+            piso = max(minimo_real * 0.9, 0.01) if not pd.isna(
+                minimo_real) else 0.01
+            previsao['yhat'] = previsao['yhat'].clip(lower=piso)
+            previsao['yhat_lower'] = previsao['yhat_lower'].clip(lower=piso)
+            previsao['yhat_upper'] = previsao['yhat_upper'].clip(lower=piso)
+
+            # Define a configuração de confiança para o hover do gráfico
+            config_prophet = {'interval_width': confianca_intervalo}
+            previsao_gerada = True
+
+    # --- CAMINHO PADRÃO/FALLBACK: PROPHET ---
+    # Será executado se:
+    # 1. O tipo de gráfico NÃO for 'cpu'.
+    # 2. O tipo for 'cpu', mas o modelo de IA correspondente (Chronos/TimesFM) falhou.
+    if not previsao_gerada:
+        if tipo == 'cpu':
+            print(
+                f"AVISO: Análise de CPU com {num_dados_treino} dados revertendo para Prophet (modelo de IA não disponível).")
+        else:
+            print(
+                f"Executando análise de {tipo} com Prophet (Padrão) (Dados: {num_dados_treino})")
+            
+        # Prepara os dados para o formato do Prophet
+        df_prophet = df_treino[['TIMESTAMP', coluna_y]].rename(
+            columns={'TIMESTAMP': 'ds', coluna_y: 'y'})
+
+        # Adiciona limites apenas para horário
+        if tipo == 'horario':
+            df_prophet['floor'] = 0
+            df_prophet['cap'] = 24
+
+        # Configura o Prophet baseado no tipo
+        config_prophet = configurar_prophet_por_tipo(tipo)
+        modelo = Prophet(**config_prophet)
+
+        if tipo in ['cpu', 'sala', 'execucao']:
+            modelo.add_seasonality(
+                name='custom_weekly', period=7, fourier_order=3, prior_scale=0.1)
+
+        modelo.fit(df_prophet)
+
+        # Cria o dataframe futuro
+        futuro = modelo.make_future_dataframe(
+            periods=prediction_length, include_history=True)
+        if tipo == 'horario':
+            futuro['floor'] = 0
+            futuro['cap'] = 24
+
+        previsao = modelo.predict(futuro)
+
+        # Pós-processamento para garantir valores não-negativos
+        if tipo in ['cpu', 'sala', 'execucao']:
+            minimo_real = df_prophet.loc[df_prophet['y'] > 0, 'y'].min()
+            piso = max(minimo_real * 0.9, 0.01) if not pd.isna(
+                minimo_real) else 0.01
+
+            previsao['yhat'] = previsao['yhat'].clip(lower=piso)
+            previsao['yhat_lower'] = previsao['yhat_lower'].clip(lower=piso)
+            previsao['yhat_upper'] = previsao['yhat_upper'].clip(lower=piso)
+
+    # --- FIM DA LÓGICA DE PREVISÃO ---
+
+    # Montagem do Gráfico Interativo com Plotly Graph Objects
+    fig = go.Figure()
+    # --- NOVO: CAMADA PARA O HISTÓRICO IGNORADO ---
+    # Compara o dataframe original (df) com o dataframe de treino (df_treino)
+    # para encontrar os pontos que não foram usados no treinamento.
+    df_ignorado = df[~df['TIMESTAMP'].isin(df_treino['TIMESTAMP'])]
+    
+    # Adiciona a linha cinza apenas se houver dados ignorados
+    if not df_ignorado.empty:
+        fig.add_trace(go.Scatter(
+            x=df_ignorado['TIMESTAMP'],
+            y=df_ignorado[coluna_y],
+            mode='lines',
+            line=dict(color='lightgrey', width=2, dash='dot'),
+            name='Histórico Ignorado'
+        ))
+    # ------------------------------------------------
+    # Camada 1: Área de Incerteza
+    fig.add_trace(go.Scatter(
+        x=previsao['ds'].tolist() + previsao['ds'].tolist()[::-1],
+        y=previsao['yhat_upper'].tolist() + previsao['yhat_lower'].tolist()[::-1],
+        fill='toself',
+        fillcolor='rgba(0,100,80,0.2)',
+        line=dict(color='rgba(255,255,255,0)'),
+        hoverinfo="none",
+        name='Intervalo de Confiança'
+    ))
+
+    # Camada 2: Linha de Previsão Principal
+    fig.add_trace(go.Scatter(
+        x=previsao['ds'],
+        y=previsao['yhat'],
+        mode='lines',
+        line=dict(color='rgba(0,100,80,0.8)', width=3),
+        name='Previsão'
+    ))
+
+    # Camada 3: Pontos dos Dados Reais com hover customizado
+    # Cria textos de hover personalizados baseados no tipo
+    hover_texts = []
+    for index, row in df.iterrows():
+        if tipo == 'cpu':
+            hover_text = (
+                f"<b>Job:</b> {row['nome_job']}<br>"
+                f"<b>Data:</b> {row['data_execucao']}<br>"
+                f"<b>Tempo CPU:</b> {row['tempo_cpu']}<br>"
+                f"<b>Return Code:</b> {row['return_code']}<br>"
+                f"<b>Usuário:</b> {row['usuario']}<br>"
+                f"<b>Job ID:</b> {row['jobid']}"
+            )
+        elif tipo == 'sala':
+            hover_text = (
+                f"<b>Job:</b> {row['nome_job']}<br>"
+                f"<b>Data:</b> {row['data_execucao']}<br>"
+                f"<b>Tempo Sala:</b> {row['tempo_sala']}<br>"
+                f"<b>Return Code:</b> {row['return_code']}<br>"
+                f"<b>Usuário:</b> {row['usuario']}<br>"
+                f"<b>Job ID:</b> {row['jobid']}"
+            )
+        elif tipo == 'execucao':
+            hover_text = (
+                f"<b>Job:</b> {row['nome_job']}<br>"
+                f"<b>Data:</b> {row['data_execucao']}<br>"
+                f"<b>Hora Execução:</b> {row['hora_execucao']}<br>"
+                f"<b>Return Code:</b> {row['return_code']}<br>"
+                f"<b>Usuário:</b> {row['usuario']}<br>"
+                f"<b>Job ID:</b> {row['jobid']}"
+            )
+        else:  # horario
+            hover_text = (
+                f"<b>Job:</b> {row['nome_job']}<br>"
+                f"<b>Data:</b> {row['data_execucao']}<br>"
+                f"<b>Horário:</b> {row['hora_execucao']}<br>"
+                f"<b>Return Code:</b> {row['return_code']}<br>"
+                f"<b>Usuário:</b> {row['usuario']}<br>"
+                f"<b>Job ID:</b> {row['jobid']}"
+            )
+        hover_texts.append(hover_text)
+
+    fig.add_trace(go.Scatter(
+        x=df['TIMESTAMP'],
+        y=df[coluna_y],
+        mode='markers',
+        marker=dict(color=cor_principal, size=8,
+                    line=dict(width=1, color='white')),
+        name='Execuções Reais',
+        hovertemplate='%{text}<extra></extra>',
+        text=hover_texts
+    ))
+
+    # Camada 4: Pontos de Previsão Futura
+    # Identifica os dados futuros (após o último timestamp real)
+    ultimo_timestamp_real = df['TIMESTAMP'].max()
+    previsao_futura = previsao[previsao['ds'] > ultimo_timestamp_real]
+
+    # Cria textos de hover para previsão futura
+    hover_texts_previsao = []
+    for index, row in previsao_futura.iterrows():
+        data_formatada = row['ds'].strftime('%d/%m/%Y')
+        if tipo == 'cpu':
+            valor_formatado = f"{row['yhat']:.2f}"
+            hover_text_prev = (
+                f"<b>PREVISÃO</b><br>"
+                f"<b>Job:</b> {nome_job}<br>"
+                f"<b>Data:</b> {data_formatada}<br>"
+                f"<b>Tempo CPU Previsto:</b> {valor_formatado}<br>"
+                f"<b>Intervalo:</b> {row['yhat_lower']:.2f} - {row['yhat_upper']:.2f}<br>"
+                f"<b>Confiança:</b> {config_prophet['interval_width']*100:.0f}%")
+        elif tipo == 'sala':
+            valor_formatado = f"{row['yhat']:.2f}"
+            hover_text_prev = (
+                f"<b>PREVISÃO</b><br>"
+                f"<b>Job:</b> {nome_job}<br>"
+                f"<b>Data:</b> {data_formatada}<br>"
+                f"<b>Tempo Sala Previsto:</b> {valor_formatado}<br>"
+                f"<b>Intervalo:</b> {row['yhat_lower']:.2f} - {row['yhat_upper']:.2f}<br>"
+                f"<b>Confiança:</b> {config_prophet['interval_width']*100:.0f}%")
+        elif tipo == 'execucao':
+            # Função auxiliar para formatar minutos em HH:MM
+            def formatar_minutos_para_horario(minutos_float):
+                if minutos_float < 0:
+                    minutos_float = 0
+                horas = int(minutos_float // 60) % 24
+                minutos = int(minutos_float % 60)
+                return f"{horas:02d}:{minutos:02d}"
+
+            valor_formatado = formatar_minutos_para_horario(row['yhat'])
+            intervalo_inicio = formatar_minutos_para_horario(
+                row['yhat_lower'])
+            intervalo_fim = formatar_minutos_para_horario(row['yhat_upper'])
+
+            hover_text_prev = (
+                f"<b>PREVISÃO</b><br>"
+                f"<b>Job:</b> {nome_job}<br>"
+                f"<b>Data:</b> {data_formatada}<br>"
+                f"<b>Hora de Execução Prevista:</b> {valor_formatado}<br>"
+                f"<b>Intervalo:</b> {intervalo_inicio} - {intervalo_fim}<br>"
+                f"<b>Confiança:</b> {config_prophet['interval_width']*100:.0f}%")
+        else:  # horario
+            # Função auxiliar para formatar horário
+            def formatar_horario(valor_decimal):
+                horas = int(valor_decimal)
+                minutos = int((valor_decimal % 1) * 60)
+                return f"{horas:02d}:{minutos:02d}"
+
+            valor_formatado = formatar_horario(row['yhat'])
+            intervalo_inicio = formatar_horario(row['yhat_lower'])
+            intervalo_fim = formatar_horario(row['yhat_upper'])
+
+            hover_text_prev = (
+                f"<b>PREVISÃO</b><br>"
+                f"<b>Job:</b> {nome_job}<br>"
+                f"<b>Data:</b> {data_formatada}<br>"
+                f"<b>Horário Previsto:</b> {valor_formatado}<br>"
+                f"<b>Intervalo:</b> {intervalo_inicio} - {intervalo_fim}<br>"
+                f"<b>Confiança:</b> {config_prophet['interval_width']*100:.0f}%")
+        hover_texts_previsao.append(hover_text_prev)
+
+    # Adiciona os pontos de previsão futura apenas se existirem
+    if len(previsao_futura) > 0:
+        fig.add_trace(go.Scatter(
+            x=previsao_futura['ds'],
+            y=previsao_futura['yhat'],
+            mode='markers',
+            marker=dict(
+                color='rgba(255,99,71,0.7)',  # Vermelho tomate semi-transparente
+                size=8,
+                line=dict(width=2, color='white'),
+                symbol='circle'  # Bolinha normal
+            ),
+            name='Previsões Futuras',
+            hovertemplate='%{text}<extra></extra>',
+            text=hover_texts_previsao
+        ))
+
+    # Configuração específica do eixo Y e título do gráfico
+    yaxis_config = dict(rangemode='tozero')
+    title_grafico = f'Análise de {coluna_y.replace("_", " ").title()} do Job: {nome_job.upper()}'
+
+    if tipo == 'horario':
+        # Formatar o eixo Y para mostrar horários (lógica existente)
+        yaxis_config = dict(
+            range=[0, 24],
+            tickmode='array',
+            tickvals=list(range(0, 25, 2)),  # A cada 2 horas
+            ticktext=[f'{h:02d}:00' for h in range(0, 25, 2)],
+            title='Horário da Execução'
+        )
+
+    # Adiciona a formatação para o gráfico de execução
+    if tipo == 'execucao':
+        # Formatar o eixo Y para mostrar horários a partir dos minutos
+        yaxis_config = dict(
+            range=[0, 1440],  # 24 horas * 60 minutos
+            tickmode='array',
+            # Marcadores a cada 4 horas
+            tickvals=[h * 60 for h in range(0, 25, 4)],
+            ticktext=[f'{h:02d}:00' for h in range(0, 25, 4)],
+            title='Horário da Execução'
+        )
+        # Ajusta o título principal do gráfico para refletir o conteúdo
+        title_grafico = f'Análise de Hora de Execução do Job: {nome_job.upper()}'
+
+    # Customização Final do Layout
+    fig.update_layout(
+        title=title_grafico,
+        xaxis_title='Data da Execução',
+        yaxis_title=label_y,
+        yaxis=yaxis_config,
+        template='plotly_white',
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            xanchor="right",
+            x=1
+        ),
+        hovermode='closest'
+    )
+
+    # Converte a figura para JSON e a retorna
+    return pio.to_json(fig)
+
+
+if __name__ == "__main__":
+    app.run(debug=True, port=5000)
