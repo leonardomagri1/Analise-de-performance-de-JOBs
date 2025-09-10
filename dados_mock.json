@@ -1,0 +1,1512 @@
+[
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "16/09/2024",
+        "hora_execucao": "04.01.53",
+        "tempo_cpu": "19,90",
+        "tempo_sala": "230,31",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 88129.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "17/09/2024",
+        "hora_execucao": "04.03.28",
+        "tempo_cpu": "20,04",
+        "tempo_sala": "229,36",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 35470.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "20/09/2024",
+        "hora_execucao": "04.09.35",
+        "tempo_cpu": "19,94",
+        "tempo_sala": "223,20",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 17013.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "21/09/2024",
+        "hora_execucao": "04.06.28",
+        "tempo_cpu": "19,89",
+        "tempo_sala": "195,26",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 65977.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "22/09/2024",
+        "hora_execucao": "04.06.35",
+        "tempo_cpu": "20,01",
+        "tempo_sala": "205,39",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 13667.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "23/09/2024",
+        "hora_execucao": "04.03.42",
+        "tempo_cpu": "19,89",
+        "tempo_sala": "206,75",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 61933.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "24/09/2024",
+        "hora_execucao": "04.04.59",
+        "tempo_cpu": "20,08",
+        "tempo_sala": "229,91",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 9502.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "27/09/2024",
+        "hora_execucao": "06.15.02",
+        "tempo_cpu": "17,26",
+        "tempo_sala": "89,52",
+        "return_code": 4038.0,
+        "usuario": "TWSUSER",
+        "jobid": 87569.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "27/09/2024",
+        "hora_execucao": "06.15.02",
+        "tempo_cpu": "17,26",
+        "tempo_sala": "89,52",
+        "return_code": 4038.0,
+        "usuario": "TWSUSER",
+        "jobid": 87569.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "28/09/2024",
+        "hora_execucao": "04.47.57",
+        "tempo_cpu": "17,18",
+        "tempo_sala": "85,40",
+        "return_code": 4038.0,
+        "usuario": "TWSUSER",
+        "jobid": 33061.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "28/09/2024",
+        "hora_execucao": "06.54.58",
+        "tempo_cpu": "0,00",
+        "tempo_sala": "0,00",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 34529.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "29/09/2024",
+        "hora_execucao": "04.47.22",
+        "tempo_cpu": "23,94",
+        "tempo_sala": "159,34",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 80430.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "30/09/2024",
+        "hora_execucao": "08.01.27",
+        "tempo_cpu": "23,27",
+        "tempo_sala": "178,83",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 29360.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "01/10/2024",
+        "hora_execucao": "04.24.00",
+        "tempo_cpu": "25,62",
+        "tempo_sala": "268,07",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 73886.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "04/10/2024",
+        "hora_execucao": "04.32.46",
+        "tempo_cpu": "24,37",
+        "tempo_sala": "251,06",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 51672.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "05/10/2024",
+        "hora_execucao": "04.15.44",
+        "tempo_cpu": "22,88",
+        "tempo_sala": "230,06",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 81194.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "06/10/2024",
+        "hora_execucao": "04.17.24",
+        "tempo_cpu": "23,50",
+        "tempo_sala": "234,99",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 18276.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "07/10/2024",
+        "hora_execucao": "04.23.05",
+        "tempo_cpu": "23,62",
+        "tempo_sala": "260,49",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 89647.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "08/10/2024",
+        "hora_execucao": "04.24.45",
+        "tempo_cpu": "23,94",
+        "tempo_sala": "249,37",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 36676.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "11/10/2024",
+        "hora_execucao": "03.35.18",
+        "tempo_cpu": "19,93",
+        "tempo_sala": "99,89",
+        "return_code": 3903.0,
+        "usuario": "TWSUSER",
+        "jobid": 12754.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "11/10/2024",
+        "hora_execucao": "05.27.46",
+        "tempo_cpu": "1,80",
+        "tempo_sala": "16,46",
+        "return_code": 3903.0,
+        "usuario": "TWSUSER",
+        "jobid": 13721.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "11/10/2024",
+        "hora_execucao": "05.46.13",
+        "tempo_cpu": "1,73",
+        "tempo_sala": "14,71",
+        "return_code": 3903.0,
+        "usuario": "TWSUSER",
+        "jobid": 13942.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "11/10/2024",
+        "hora_execucao": "06.09.26",
+        "tempo_cpu": "0,93",
+        "tempo_sala": "5,78",
+        "return_code": 12.0,
+        "usuario": "TWSUSER",
+        "jobid": 14215.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "11/10/2024",
+        "hora_execucao": "06.17.16",
+        "tempo_cpu": "1,07",
+        "tempo_sala": "6,57",
+        "return_code": 12.0,
+        "usuario": "TWSUSER",
+        "jobid": 14294.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "11/10/2024",
+        "hora_execucao": "06.25.01",
+        "tempo_cpu": "1,43",
+        "tempo_sala": "10,97",
+        "return_code": 12.0,
+        "usuario": "TWSUSER",
+        "jobid": 14371.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "11/10/2024",
+        "hora_execucao": "06.37.51",
+        "tempo_cpu": "1,58",
+        "tempo_sala": "12,38",
+        "return_code": 12.0,
+        "usuario": "TWSUSER",
+        "jobid": 14507.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "11/10/2024",
+        "hora_execucao": "07.23.07",
+        "tempo_cpu": "5,74",
+        "tempo_sala": "153,80",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 15075.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "12/10/2024",
+        "hora_execucao": "03.33.52",
+        "tempo_cpu": "23,83",
+        "tempo_sala": "263,97",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 58004.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "14/10/2024",
+        "hora_execucao": "04.09.31",
+        "tempo_cpu": "24,12",
+        "tempo_sala": "260,34",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 16281.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "15/10/2024",
+        "hora_execucao": "04.12.25",
+        "tempo_cpu": "23,88",
+        "tempo_sala": "274,09",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 60411.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "18/10/2024",
+        "hora_execucao": "04.09.53",
+        "tempo_cpu": "24,38",
+        "tempo_sala": "270,75",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 35009.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "19/10/2024",
+        "hora_execucao": "04.13.15",
+        "tempo_cpu": "24,24",
+        "tempo_sala": "320,85",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 78923.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "20/10/2024",
+        "hora_execucao": "04.14.37",
+        "tempo_cpu": "24,16",
+        "tempo_sala": "270,91",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 24933.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "21/10/2024",
+        "hora_execucao": "04.13.05",
+        "tempo_cpu": "23,78",
+        "tempo_sala": "247,00",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 70780.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "22/10/2024",
+        "hora_execucao": "04.20.11",
+        "tempo_cpu": "24,07",
+        "tempo_sala": "262,60",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 18054.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "25/10/2024",
+        "hora_execucao": "03.33.40",
+        "tempo_cpu": "23,86",
+        "tempo_sala": "247,83",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 94620.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "26/10/2024",
+        "hora_execucao": "04.12.42",
+        "tempo_cpu": "24,21",
+        "tempo_sala": "266,90",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 39957.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "27/10/2024",
+        "hora_execucao": "04.15.26",
+        "tempo_cpu": "24,06",
+        "tempo_sala": "255,40",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 86113.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "28/10/2024",
+        "hora_execucao": "04.14.52",
+        "tempo_cpu": "24,24",
+        "tempo_sala": "257,94",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 32954.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "29/10/2024",
+        "hora_execucao": "04.11.30",
+        "tempo_cpu": "24,08",
+        "tempo_sala": "268,40",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 79713.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "31/10/2024",
+        "hora_execucao": "03.41.46",
+        "tempo_cpu": "111,15",
+        "tempo_sala": "154,29",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 42487.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "01/11/2024",
+        "hora_execucao": "03.42.14",
+        "tempo_cpu": "113,98",
+        "tempo_sala": "185,36",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 65692.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "02/11/2024",
+        "hora_execucao": "03.59.59",
+        "tempo_cpu": "117,80",
+        "tempo_sala": "166,41",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 90495.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "05/11/2024",
+        "hora_execucao": "03.49.38",
+        "tempo_cpu": "110,97",
+        "tempo_sala": "155,04",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 27790.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "06/11/2024",
+        "hora_execucao": "03.55.16",
+        "tempo_cpu": "112,16",
+        "tempo_sala": "149,38",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 50461.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "07/11/2024",
+        "hora_execucao": "03.45.31",
+        "tempo_cpu": "113,61",
+        "tempo_sala": "157,70",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 75337.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "08/11/2024",
+        "hora_execucao": "03.50.40",
+        "tempo_cpu": "114,59",
+        "tempo_sala": "154,40",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 97820.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "09/11/2024",
+        "hora_execucao": "03.46.01",
+        "tempo_cpu": "115,60",
+        "tempo_sala": "172,79",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 21626.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "12/11/2024",
+        "hora_execucao": "03.35.47",
+        "tempo_cpu": "113,51",
+        "tempo_sala": "162,07",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 58535.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "13/11/2024",
+        "hora_execucao": "03.48.02",
+        "tempo_cpu": "114,13",
+        "tempo_sala": "153,26",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 81349.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "14/11/2024",
+        "hora_execucao": "03.45.10",
+        "tempo_cpu": "115,90",
+        "tempo_sala": "157,03",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 4911.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "15/11/2024",
+        "hora_execucao": "03.45.07",
+        "tempo_cpu": "114,06",
+        "tempo_sala": "157,53",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 27800.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "19/11/2024",
+        "hora_execucao": "03.34.49",
+        "tempo_cpu": "113,41",
+        "tempo_sala": "158,86",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 72751.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "20/11/2024",
+        "hora_execucao": "03.45.17",
+        "tempo_cpu": "112,85",
+        "tempo_sala": "139,20",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 93241.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "22/11/2024",
+        "hora_execucao": "03.46.12",
+        "tempo_cpu": "113,58",
+        "tempo_sala": "156,56",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 22406.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "23/11/2024",
+        "hora_execucao": "03.45.05",
+        "tempo_cpu": "112,29",
+        "tempo_sala": "135,98",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 44757.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "26/11/2024",
+        "hora_execucao": "03.44.39",
+        "tempo_cpu": "113,20",
+        "tempo_sala": "156,16",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 80904.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "27/11/2024",
+        "hora_execucao": "03.45.33",
+        "tempo_cpu": "113,29",
+        "tempo_sala": "145,55",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 1547.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "28/11/2024",
+        "hora_execucao": "03.45.32",
+        "tempo_cpu": "151,70",
+        "tempo_sala": "210,63",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 24620.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "29/11/2024",
+        "hora_execucao": "03.50.14",
+        "tempo_cpu": "163,81",
+        "tempo_sala": "222,83",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 48362.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "30/11/2024",
+        "hora_execucao": "03.45.48",
+        "tempo_cpu": "166,80",
+        "tempo_sala": "262,13",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 71390.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "03/12/2024",
+        "hora_execucao": "04.14.46",
+        "tempo_cpu": "161,62",
+        "tempo_sala": "220,46",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 8343.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "04/12/2024",
+        "hora_execucao": "03.53.17",
+        "tempo_cpu": "160,86",
+        "tempo_sala": "202,27",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 30195.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "05/12/2024",
+        "hora_execucao": "04.01.58",
+        "tempo_cpu": "161,53",
+        "tempo_sala": "207,68",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 52964.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "06/12/2024",
+        "hora_execucao": "03.36.00",
+        "tempo_cpu": "161,20",
+        "tempo_sala": "208,48",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 75621.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "07/12/2024",
+        "hora_execucao": "03.49.31",
+        "tempo_cpu": "166,73",
+        "tempo_sala": "217,52",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 99234.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "10/12/2024",
+        "hora_execucao": "03.39.36",
+        "tempo_cpu": "166,86",
+        "tempo_sala": "223,01",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 34879.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "11/12/2024",
+        "hora_execucao": "03.50.13",
+        "tempo_cpu": "165,19",
+        "tempo_sala": "218,75",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 57084.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "12/12/2024",
+        "hora_execucao": "03.48.18",
+        "tempo_cpu": "169,13",
+        "tempo_sala": "220,94",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 80684.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "13/12/2024",
+        "hora_execucao": "03.49.12",
+        "tempo_cpu": "168,04",
+        "tempo_sala": "217,58",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 3369.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "14/12/2024",
+        "hora_execucao": "03.49.24",
+        "tempo_cpu": "168,04",
+        "tempo_sala": "215,44",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 25506.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "17/12/2024",
+        "hora_execucao": "03.48.20",
+        "tempo_cpu": "169,52",
+        "tempo_sala": "225,91",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 62145.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "18/12/2024",
+        "hora_execucao": "03.50.04",
+        "tempo_cpu": "168,42",
+        "tempo_sala": "219,75",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 83775.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "19/12/2024",
+        "hora_execucao": "03.49.31",
+        "tempo_cpu": "168,51",
+        "tempo_sala": "213,21",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 6693.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "20/12/2024",
+        "hora_execucao": "03.58.15",
+        "tempo_cpu": "170,24",
+        "tempo_sala": "224,83",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 29598.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "21/12/2024",
+        "hora_execucao": "03.49.55",
+        "tempo_cpu": "168,03",
+        "tempo_sala": "211,42",
+        "return_code": "SE37",
+        "usuario": "TWSUSER",
+        "jobid": 52818.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "21/12/2024",
+        "hora_execucao": "08.18.41",
+        "tempo_cpu": "2,32",
+        "tempo_sala": "11,45",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 55092.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "24/12/2024",
+        "hora_execucao": "03.49.40",
+        "tempo_cpu": "177,41",
+        "tempo_sala": "232,30",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 89049.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "25/12/2024",
+        "hora_execucao": "03.49.05",
+        "tempo_cpu": "174,89",
+        "tempo_sala": "223,56",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 8412.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "27/12/2024",
+        "hora_execucao": "04.25.21",
+        "tempo_cpu": "187,32",
+        "tempo_sala": "214,48",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 37544.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "28/12/2024",
+        "hora_execucao": "03.48.31",
+        "tempo_cpu": "185,55",
+        "tempo_sala": "228,49",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 57791.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "31/12/2024",
+        "hora_execucao": "03.55.16",
+        "tempo_cpu": "202,23",
+        "tempo_sala": "281,49",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 94781.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "01/01/2025",
+        "hora_execucao": "03.48.21",
+        "tempo_cpu": "200,43",
+        "tempo_sala": "319,75",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 12184.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "03/01/2025",
+        "hora_execucao": "04.12.12",
+        "tempo_cpu": "191,41",
+        "tempo_sala": "257,27",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 42598.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "04/01/2025",
+        "hora_execucao": "03.49.06",
+        "tempo_cpu": "194,04",
+        "tempo_sala": "273,21",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 63447.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "07/01/2025",
+        "hora_execucao": "03.56.33",
+        "tempo_cpu": "194,02",
+        "tempo_sala": "255,80",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 99957.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "08/01/2025",
+        "hora_execucao": "03.53.31",
+        "tempo_cpu": "196,47",
+        "tempo_sala": "245,24",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 21380.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "09/01/2025",
+        "hora_execucao": "03.36.12",
+        "tempo_cpu": "195,85",
+        "tempo_sala": "257,30",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 44557.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "10/01/2025",
+        "hora_execucao": "03.49.25",
+        "tempo_cpu": "195,92",
+        "tempo_sala": "255,51",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 67916.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "11/01/2025",
+        "hora_execucao": "03.50.19",
+        "tempo_cpu": "195,77",
+        "tempo_sala": "248,71",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 90718.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "14/01/2025",
+        "hora_execucao": "03.49.12",
+        "tempo_cpu": "198,51",
+        "tempo_sala": "250,77",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 27756.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "15/01/2025",
+        "hora_execucao": "03.50.45",
+        "tempo_cpu": "198,93",
+        "tempo_sala": "247,67",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 50534.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "16/01/2025",
+        "hora_execucao": "04.01.09",
+        "tempo_cpu": "199,92",
+        "tempo_sala": "354,38",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 73929.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "17/01/2025",
+        "hora_execucao": "03.52.47",
+        "tempo_cpu": "200,50",
+        "tempo_sala": "264,71",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 96902.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "18/01/2025",
+        "hora_execucao": "03.50.22",
+        "tempo_cpu": "199,63",
+        "tempo_sala": "274,63",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 21607.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "21/01/2025",
+        "hora_execucao": "03.50.35",
+        "tempo_cpu": "198,38",
+        "tempo_sala": "258,01",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 61292.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "22/01/2025",
+        "hora_execucao": "03.35.08",
+        "tempo_cpu": "198,20",
+        "tempo_sala": "250,78",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 87259.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "23/01/2025",
+        "hora_execucao": "03.48.27",
+        "tempo_cpu": "198,60",
+        "tempo_sala": "249,80",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 14679.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "24/01/2025",
+        "hora_execucao": "03.50.16",
+        "tempo_cpu": "198,03",
+        "tempo_sala": "251,78",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 39844.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "25/01/2025",
+        "hora_execucao": "03.50.45",
+        "tempo_cpu": "199,00",
+        "tempo_sala": "253,89",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 64525.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "28/01/2025",
+        "hora_execucao": "03.51.21",
+        "tempo_cpu": "236,09",
+        "tempo_sala": "295,25",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 5435.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "29/01/2025",
+        "hora_execucao": "03.51.53",
+        "tempo_cpu": "235,36",
+        "tempo_sala": "293,73",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 32878.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "30/01/2025",
+        "hora_execucao": "03.52.49",
+        "tempo_cpu": "236,40",
+        "tempo_sala": "301,34",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 56532.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "31/01/2025",
+        "hora_execucao": "03.52.36",
+        "tempo_cpu": "236,21",
+        "tempo_sala": "298,09",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 77786.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "01/02/2025",
+        "hora_execucao": "03.49.00",
+        "tempo_cpu": "231,63",
+        "tempo_sala": "313,81",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 2409.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "04/02/2025",
+        "hora_execucao": "04.17.13",
+        "tempo_cpu": "247,73",
+        "tempo_sala": "335,02",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 41332.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "05/02/2025",
+        "hora_execucao": "04.15.20",
+        "tempo_cpu": "242,58",
+        "tempo_sala": "293,10",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 66459.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "06/02/2025",
+        "hora_execucao": "04.12.48",
+        "tempo_cpu": "249,43",
+        "tempo_sala": "365,31",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 91545.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "07/02/2025",
+        "hora_execucao": "03.54.30",
+        "tempo_cpu": "250,57",
+        "tempo_sala": "325,76",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 14245.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "08/02/2025",
+        "hora_execucao": "04.15.49",
+        "tempo_cpu": "251,66",
+        "tempo_sala": "343,71",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 38644.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "11/02/2025",
+        "hora_execucao": "04.06.54",
+        "tempo_cpu": "251,36",
+        "tempo_sala": "332,93",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 77619.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "12/02/2025",
+        "hora_execucao": "03.52.43",
+        "tempo_cpu": "252,40",
+        "tempo_sala": "316,04",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 3731.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "13/02/2025",
+        "hora_execucao": "03.53.13",
+        "tempo_cpu": "253,17",
+        "tempo_sala": "314,41",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 30036.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "14/02/2025",
+        "hora_execucao": "03.54.12",
+        "tempo_cpu": "249,35",
+        "tempo_sala": "319,25",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 52748.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "15/02/2025",
+        "hora_execucao": "03.51.18",
+        "tempo_cpu": "244,48",
+        "tempo_sala": "336,92",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 79023.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "18/02/2025",
+        "hora_execucao": "03.55.03",
+        "tempo_cpu": "237,40",
+        "tempo_sala": "306,25",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 18454.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "19/02/2025",
+        "hora_execucao": "03.54.16",
+        "tempo_cpu": "234,01",
+        "tempo_sala": "287,45",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 46175.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "20/02/2025",
+        "hora_execucao": "03.51.09",
+        "tempo_cpu": "235,17",
+        "tempo_sala": "301,71",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 72129.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "21/02/2025",
+        "hora_execucao": "03.50.02",
+        "tempo_cpu": "236,44",
+        "tempo_sala": "326,68",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 94378.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "22/02/2025",
+        "hora_execucao": "03.48.24",
+        "tempo_cpu": "241,21",
+        "tempo_sala": "364,68",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 19977.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "25/02/2025",
+        "hora_execucao": "03.34.00",
+        "tempo_cpu": "233,57",
+        "tempo_sala": "309,55",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 60607.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "26/02/2025",
+        "hora_execucao": "03.49.44",
+        "tempo_cpu": "269,33",
+        "tempo_sala": "341,00",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 86001.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "27/02/2025",
+        "hora_execucao": "03.48.58",
+        "tempo_cpu": "261,45",
+        "tempo_sala": "333,46",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 8752.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "28/02/2025",
+        "hora_execucao": "03.51.31",
+        "tempo_cpu": "262,06",
+        "tempo_sala": "342,16",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 30778.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "01/03/2025",
+        "hora_execucao": "09.51.07",
+        "tempo_cpu": "264,63",
+        "tempo_sala": "352,04",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 57720.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "06/03/2025",
+        "hora_execucao": "04.36.05",
+        "tempo_cpu": "268,45",
+        "tempo_sala": "456,53",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 7599.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "07/03/2025",
+        "hora_execucao": "04.03.46",
+        "tempo_cpu": "268,04",
+        "tempo_sala": "419,64",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 30472.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "08/03/2025",
+        "hora_execucao": "03.52.42",
+        "tempo_cpu": "267,40",
+        "tempo_sala": "363,02",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 52199.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "11/03/2025",
+        "hora_execucao": "03.49.52",
+        "tempo_cpu": "264,80",
+        "tempo_sala": "341,86",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 88057.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "12/03/2025",
+        "hora_execucao": "03.49.17",
+        "tempo_cpu": "266,93",
+        "tempo_sala": "345,49",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 10165.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "13/03/2025",
+        "hora_execucao": "03.49.42",
+        "tempo_cpu": "267,06",
+        "tempo_sala": "334,79",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 34209.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "14/03/2025",
+        "hora_execucao": "03.50.24",
+        "tempo_cpu": "269,14",
+        "tempo_sala": "353,67",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 57973.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "15/03/2025",
+        "hora_execucao": "03.49.27",
+        "tempo_cpu": "271,00",
+        "tempo_sala": "395,06",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 83138.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "18/03/2025",
+        "hora_execucao": "03.46.51",
+        "tempo_cpu": "261,47",
+        "tempo_sala": "332,14",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 21601.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "19/03/2025",
+        "hora_execucao": "03.48.08",
+        "tempo_cpu": "259,68",
+        "tempo_sala": "305,62",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 46980.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "19/03/2025",
+        "hora_execucao": "03.48.08",
+        "tempo_cpu": "259,68",
+        "tempo_sala": "305,62",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 46980.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "19/03/2025",
+        "hora_execucao": "03.48.08",
+        "tempo_cpu": "259,68",
+        "tempo_sala": "305,62",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 46980.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "19/03/2025",
+        "hora_execucao": "03.48.08",
+        "tempo_cpu": "259,68",
+        "tempo_sala": "305,62",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 46980.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "20/03/2025",
+        "hora_execucao": "03.47.46",
+        "tempo_cpu": "259,97",
+        "tempo_sala": "320,14",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 73493.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "21/03/2025",
+        "hora_execucao": "03.49.20",
+        "tempo_cpu": "256,53",
+        "tempo_sala": "336,91",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 96855.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "22/03/2025",
+        "hora_execucao": "03.47.46",
+        "tempo_cpu": "255,55",
+        "tempo_sala": "313,55",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 23919.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "25/03/2025",
+        "hora_execucao": "03.48.02",
+        "tempo_cpu": "257,23",
+        "tempo_sala": "349,61",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 66103.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "26/03/2025",
+        "hora_execucao": "03.48.11",
+        "tempo_cpu": "256,50",
+        "tempo_sala": "321,64",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 91999.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "27/03/2025",
+        "hora_execucao": "03.48.07",
+        "tempo_cpu": "256,84",
+        "tempo_sala": "326,34",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 17411.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "28/03/2025",
+        "hora_execucao": "03.50.03",
+        "tempo_cpu": "256,61",
+        "tempo_sala": "328,97",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 40448.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "29/03/2025",
+        "hora_execucao": "03.51.19",
+        "tempo_cpu": "240,71",
+        "tempo_sala": "319,49",
+        "return_code": 0.0,
+        "usuario": "TWSUSER",
+        "jobid": 66035.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "01/04/2025",
+        "hora_execucao": "03.47.08",
+        "tempo_cpu": "271,89",
+        "tempo_sala": "402,94",
+        "return_code": 0.0,
+        "usuario": "USRIWPRD",
+        "jobid": 721.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "02/04/2025",
+        "hora_execucao": "04.23.09",
+        "tempo_cpu": "263,48",
+        "tempo_sala": "315,20",
+        "return_code": 0.0,
+        "usuario": "USRIWPRD",
+        "jobid": 23508.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "03/04/2025",
+        "hora_execucao": "03.51.59",
+        "tempo_cpu": "264,18",
+        "tempo_sala": "344,76",
+        "return_code": 0.0,
+        "usuario": "USRIWPRD",
+        "jobid": 45733.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "04/04/2025",
+        "hora_execucao": "03.57.41",
+        "tempo_cpu": "266,13",
+        "tempo_sala": "353,50",
+        "return_code": 0.0,
+        "usuario": "USRIWPRD",
+        "jobid": 66553.0
+    },
+    {
+        "nome_job": "OCGJD400",
+        "data_execucao": "05/04/2025",
+        "hora_execucao": "03.46.13",
+        "tempo_cpu": "266,90",
+        "tempo_sala": "397,95",
+        "return_code": 0.0,
+        "usuario": "USRIWPRD",
+        "jobid": 85669.0
+    }
+]

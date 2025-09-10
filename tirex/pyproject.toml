@@ -1,0 +1,107 @@
+[project]
+name = "tirex-ts"
+version = "1.0.0"
+authors = [
+  { name="Andreas Auer", email="andreas.auer@nx-ai.com" },
+]
+description = "A pre-trained Time Series Forecasting Model based on xLSTM supporting zero-shot forecasting"
+readme = "README.md"
+license = {file="LICENSE"}
+requires-python = ">=3.11"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+]
+keywords = ["TiRex", "xLSTM", "Time Series", "Zero-shot", "Deep Learning"]
+dependencies = [
+    "torch",
+    "einops",
+    "huggingface-hub",
+    "numpy",
+    "pandas",
+    "tqdm"
+]
+
+[project.urls]
+Repository = "https://github.com/NX-AI/tirex"
+Issues = "https://github.com/NX-AI/tirex/issues"
+
+[project.optional-dependencies]
+cuda = [
+    "xlstm",
+    "ninja",
+]
+notebooks = ["ipykernel", "matplotlib"]
+gluonts = ["gluonts"]
+hfdataset = ["datasets"]
+test = ["fev", "pytest"]
+all = [
+    "xlstm",
+    "ninja",
+    "ipykernel",
+    "matplotlib",
+    "gluonts",
+    "datasets",
+    "pytest",
+    "fev",
+]
+
+# build system
+[build-system]
+requires = ["setuptools>=77.0.3", "wheel"]
+build-backend = "setuptools.build_meta"
+
+# docformatter
+[tool.docformatter]
+diff = false
+docstring-length = [40, 1000]
+in-place = true
+pre-summary-newline = true
+recursive = true
+wrap-summaries = 100
+wrap-descriptions = 100
+non-cap = ["TiRex", "xLSTM", "sLSTM"]
+
+# pytest
+[tool.pytest.ini_options]
+pythonpath = "."
+log_cli = true
+log_cli_level = "INFO"
+log_format = "%(asctime)s %(levelname)s %(message)s"
+log_date_format = "%Y-%m-%d %H:%M:%S"
+
+# ruff
+[tool.ruff]
+exclude = [
+    ".eggs",
+    ".git",
+    ".ipynb_checkpoints",
+    ".pytest_cache",
+    ".ruff_cache",
+    ".vscode",
+    "__pypackages__",
+    "_build",
+    "build",
+    "dist",
+    "node_modules",
+    "site-packages",
+    "archive",
+]
+line-length = 120
+target-version = "py311"
+
+[tool.ruff.format]
+quote-style = "double"
+
+[tool.ruff.lint]
+select = ["I001"]
+
+[tool.ruff.lint.mccabe]
+max-complexity = 18
+
+[tool.ruff.lint.isort]
+combine-as-imports = true
+section-order = ["future", "standard-library", "third-party", "first-party", "tirex", "local-folder"]
+
+[tool.ruff.lint.isort.sections]
+"tirex" = ["tirex"]
