@@ -1,10 +1,538 @@
-import { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
-import './index.css'
-import App from './App.jsx'
+import React, { useState, useEffect, useRef } from 'react';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { ptBR } from 'date-fns/locale'; 
+import Plot from 'react-plotly.js';
+import {
+  Box,
+  Container,
+  Grid,
+  Typography,
+  Paper,
+  TextField,         
+  Button,            
+  CircularProgress,
+  Alert,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  createTheme,
+  ThemeProvider,
+  CssBaseline,
+  Divider,
+} from '@mui/material';
+import SearchIcon from '@mui/icons-material/Search'; 
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import TimelineIcon from '@mui/icons-material/Timeline';
+import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import MemoryIcon from '@mui/icons-material/Memory';
 
-createRoot(document.getElementById('root')).render(
-  <StrictMode>
-    <App />
-  </StrictMode>,
-)
+// --- Constantes Estáticas do Componente ---
+const placeholders = {
+  hora_execucao: "Ex: 22:01:00",
+  tempo_cpu: "Ex: 9.74",
+  tempo_sala: "Ex: 20.17",
+  return_code: "Ex: 0000",
+  usuario: "Ex: USRIWPRD",
+};
+
+const formatRegex = {
+  tempo_cpu: /^[0-9]*(\.([0-9]{0,2})?)?$/,
+  tempo_sala: /^[0-9]*(\.([0-9]{0,2})?)?$/,
+  return_code: /^[0-9]{0,4}$/,
+  usuario: /^[A-Z0-9]*$/,
+};
+
+const theme = createTheme({
+  palette: {
+    primary: {
+      main: '#1565c0', // Azul mais escuro e profissional
+      light: '#5e92f3',
+      dark: '#003c8f',
+    },
+    secondary: {
+      main: '#757575', // Cinza para acentos
+    },
+    background: {
+      default: '#f5f7fa', // Fundo mais claro e moderno
+      paper: '#ffffff',
+    },
+    text: {
+      primary: '#333333', // Texto mais escuro para melhor legibilidade
+      secondary: '#666666',
+    },
+  },
+  typography: {
+    fontFamily: 'Roboto, sans-serif',
+    h4: {
+      fontWeight: 600,
+      color: '#1565c0',
+    },
+    h6: {
+      fontWeight: 500,
+    },
+    subtitle1: {
+      color: '#666666',
+    },
+    body2: {
+      color: '#666666',
+    },
+  },
+  components: {
+    MuiPaper: {
+      styleOverrides: {
+        root: {
+          borderRadius: 12, // Bordas mais arredondadas para um look moderno
+          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.05)', // Sombra sutil
+        },
+      },
+    },
+    MuiButton: {
+      styleOverrides: {
+        root: {
+          borderRadius: 8,
+          textTransform: 'none',
+          fontWeight: 500,
+        },
+      },
+    },
+    MuiTextField: {
+      styleOverrides: {
+        root: {
+          '& .MuiOutlinedInput-root': {
+            borderRadius: 8,
+          },
+        },
+      },
+    },
+    MuiAccordion: {
+      styleOverrides: {
+        root: {
+          borderRadius: 12,
+          boxShadow: 'none',
+          border: '1px solid #e0e0e0',
+        },
+      },
+    },
+  },
+});
+
+// Componente principal da página
+const AnalisePerformancePage = () => {
+  // --- Estados para os campos de input ---
+  const [jobInput, setJobInput] = useState(''); // Alterado
+  const [dataInicio, setDataInicio] = useState(null);
+  const [dataFim, setDataFim] = useState(null); // Alterado de qtdeDias para dataFim
+
+  // --- Estado unificado que dispara a busca ---
+  const [searchQuery, setSearchQuery] = useState({
+    job: '', // Alterado para evitar busca inicial
+    startDate: '',
+    endDate: '' // Alterado de days para endDate
+  });
+
+  // --- NOVO: Estado para os filtros avançados ---
+  const initialFilters = {
+    hora_execucao: { operator: 'eq', value1: '', value2: '' },
+    tempo_cpu: { operator: 'eq', value1: '', value2: '' },
+    tempo_sala: { operator: 'eq', value1: '', value2: '' },
+    return_code: { operator: 'eq', value1: '', value2: '' },
+    usuario: { operator: 'eq', value1: '' },
+  };
+  const [advancedFilters, setAdvancedFilters] = useState(initialFilters);
+
+  // Estados para armazenar os dados dos gráficos e controle
+  const [chartCpuData, setChartCpuData] = useState(null);
+  const [chartSalaData, setChartSalaData] = useState(null);
+  const [chartExecucaoData, setChartExecucaoData] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [hasSearched, setHasSearched] = useState(false);
+  const isInitialMount = useRef(true);
+
+  // --- Efeito para Carregar os Dados da API ---
+  useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+    
+    const carregarGraficos = async () => {
+      const { job, startDate, endDate, filters } = searchQuery;
+      if (!job || !startDate || !endDate) return; // Adiciona checagem extra
+
+      setIsLoading(true);
+      setError(null);
+      setChartCpuData(null);
+      setChartSalaData(null);
+      setChartExecucaoData(null);
+
+      try {
+        const params = new URLSearchParams({
+          data_inicio: startDate,
+          data_fim: endDate, // Alterado de qtde_dias para data_fim
+        });
+
+        // Adiciona os filtros avançados à query string, se tiverem valor
+        for (const field in filters) {
+          const { operator, value1, value2 } = filters[field];
+          if (value1) { // Só adiciona o filtro se o primeiro valor for preenchido
+            let filterValue = `${operator}:${value1}`;
+            if (operator === 'between' && value2) {
+              filterValue += `,${value2}`;
+            }
+            params.append(`filter_${field}`, filterValue);
+          }
+        }
+
+        const query = params.toString();
+        const promises = ['cpu', 'sala', 'execucao'].map(async (tipo) => {
+          const response = await fetch(`http://localhost:5000/api/grafico/${tipo}/${job}?${query}`);
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.erro || `Erro ao buscar gráfico de ${tipo}`);
+          }
+          return response.json();
+        });
+
+        const [cpuData, salaData, execucaoData] = await Promise.all(promises);
+        setChartCpuData(cpuData);
+        setChartSalaData(salaData);
+        setChartExecucaoData(execucaoData);
+      } catch (err) {
+        console.error("Falha ao carregar gráficos:", err);
+        setError(err.message);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    carregarGraficos();
+
+  }, [searchQuery]);
+
+  // --- Manipuladores de Eventos ---
+  const handleFilterChange = (field, part, value) => {
+    // Se a parte alterada for o operador, atualize o estado diretamente sem validação.
+    if (part === 'operator') {
+      setAdvancedFilters(prev => ({
+        ...prev,
+        [field]: { ...prev[field], operator: value }
+      }));
+      return; // Interrompe a execução aqui.
+    }
+
+    // A partir daqui, a lógica só se aplica a 'value1' e 'value2'.
+    let processedValue = value;
+
+    if (field === 'hora_execucao') {
+      // Lógica de Máscara para HH:MM:SS
+      const digitsOnly = value.replace(/\D/g, '');
+      let maskedValue = digitsOnly;
+      if (digitsOnly.length > 2) {
+        maskedValue = `${digitsOnly.slice(0, 2)}:${digitsOnly.slice(2)}`;
+      }
+      if (digitsOnly.length > 4) {
+        maskedValue = `${digitsOnly.slice(0, 2)}:${digitsOnly.slice(2, 4)}:${digitsOnly.slice(4, 6)}`;
+      }
+      processedValue = maskedValue.slice(0, 8);
+    } else {
+      // Lógica de validação para os outros campos
+      if (field === 'usuario') {
+        processedValue = value.toUpperCase();
+      }
+      const regex = formatRegex[field];
+      if (regex && !(processedValue === '' || regex.test(processedValue))) {
+        return;
+      }
+    }
+
+    // Atualiza o estado para 'value1' ou 'value2'
+    setAdvancedFilters(prev => ({
+      ...prev,
+      [field]: { ...prev[field], [part]: processedValue }
+    }));
+  };
+
+  const handleSearch = () => {
+    const formattedStartDate = dataInicio 
+      ? dataInicio.toLocaleDateString('pt-BR', { year: 'numeric', month: '2-digit', day: '2-digit' }) 
+      : '';
+    
+    const formattedEndDate = dataFim
+      ? dataFim.toLocaleDateString('pt-BR', { year: 'numeric', month: '2-digit', day: '2-digit' })
+      : '';
+
+    // Validações
+    if (!jobInput.trim()) {
+      return setError("Por favor, digite um Nome do Job.");
+    }
+    if (!formattedStartDate || !formattedEndDate) {
+      return setError("Por favor, selecione uma Data de Início e uma Data Fim.");
+    }
+    if (dataInicio > dataFim) {
+      return setError("A Data Fim não pode ser anterior à Data de Início.");
+    }
+
+    setError(null);
+    setHasSearched(true); 
+    setSearchQuery({
+      job: jobInput.trim().toUpperCase(),
+      startDate: formattedStartDate,
+      endDate: formattedEndDate,
+      filters: advancedFilters
+    });
+  };
+
+  const handleKeyPress = (event) => {
+    if (event.key === 'Enter') {
+      handleSearch();
+    }
+  };
+
+  // --- Renderização do Componente ---
+  return (
+    <ThemeProvider theme={theme}>
+      <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ptBR}>
+        <CssBaseline />
+        <Box sx={{ flexGrow: 1, minHeight: '100vh', bgcolor: 'background.default' }}>
+          <Container maxWidth="xl" sx={{ py: 4 }}>
+            <Grid container direction="column" spacing={4}>
+              
+              {/* Cabeçalho */}
+              <Grid item>
+                <Typography variant="h4" gutterBottom>
+                  Análise de Performance de Jobs
+                </Typography>
+                <Typography variant="subtitle1" color="text.secondary">
+                  Utilize os filtros avançados para refinar a análise e visualizar métricas históricas e previsões.
+                </Typography>
+              </Grid>
+
+              {/* Painel de Controles */}
+              <Grid item>
+                <Paper elevation={3} sx={{ p: 3 }}>
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                    {/* Seção de Busca Principal */}
+                    <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2, flexWrap: 'wrap' }}>
+                      <TextField
+                        label="Nome do Job"
+                        variant="outlined"
+                        value={jobInput}
+                        placeholder="Ex: OCGJD400"
+                        onChange={(e) => setJobInput(e.target.value)}
+                        onKeyDown={handleKeyPress}
+                        sx={{ flex: '2 1 200px' }}
+                        InputLabelProps={{ shrink: true }}
+                      />
+
+                      <DatePicker
+                        label="Data de Início"
+                        value={dataInicio}
+                        onChange={(newValue) => setDataInicio(newValue)}
+                        renderInput={(params) => (
+                          <TextField
+                            {...params}
+                            onKeyDown={handleKeyPress}
+                            sx={{ flex: '1 1 180px' }}
+                            InputLabelProps={{ shrink: true }}
+                          />
+                        )}
+                      />
+
+                      {/* Campo Data Fim */}
+                      <DatePicker
+                        label="Data Fim"
+                        value={dataFim}
+                        onChange={(newValue) => setDataFim(newValue)}
+                        renderInput={(params) => (
+                          <TextField
+                            {...params}
+                            onKeyDown={handleKeyPress}
+                            sx={{ flex: '1 1 180px' }}
+                            InputLabelProps={{ shrink: true }}
+                          />
+                        )}
+                      />
+                      
+                      <Button
+                        variant="contained"
+                        color="primary"
+                        onClick={handleSearch}
+                        startIcon={<SearchIcon />}
+                        sx={{ flex: '0 1 auto', px: 4, height: '56px' }}
+                      >
+                        Analisar
+                      </Button>
+                    </Box>
+
+                    <Divider />
+
+                    {/* Seção de Filtros Avançados */}
+                    <Accordion variant="outlined">
+                      <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <Typography variant="subtitle1">Filtros Avançados</Typography>
+                          <Typography variant="body2" color="text.secondary">(Opcional)</Typography>
+                        </Box>
+                      </AccordionSummary>
+                      <AccordionDetails>
+                        <Grid container spacing={3} alignItems="center">
+                          {Object.keys(advancedFilters).map((field) => {
+                            const filter = advancedFilters[field];
+                            const isNumeric = field !== 'usuario';
+                            const numericOperators = [
+                              { value: 'eq', label: 'Igual a' }, { value: 'ne', label: 'Diferente de' },
+                              { value: 'lt', label: 'Menor que' }, { value: 'le', label: 'Menor ou igual a' },
+                              { value: 'gt', label: 'Maior que' }, { value: 'ge', label: 'Maior ou igual a' },
+                              { value: 'between', label: 'Entre' },
+                            ];
+                            const stringOperators = [
+                              { value: 'eq', label: 'Igual a' }, { value: 'ne', label: 'Diferente de' },
+                            ];
+
+                            return (
+                              <React.Fragment key={field}>
+                                <Grid item xs={12} sm={3}>
+                                  <Typography textTransform="capitalize" sx={{ fontWeight: 500, pt: 1 }}>
+                                    {field.replace('_', ' ')}
+                                  </Typography>
+                                </Grid>
+                                <Grid item xs={12} sm={3}>
+                                  <FormControl fullWidth variant="outlined">
+                                    <InputLabel>Condição</InputLabel>
+                                    <Select
+                                      value={filter.operator}
+                                      onChange={(e) => handleFilterChange(field, 'operator', e.target.value)}
+                                      label="Condição"
+                                    >
+                                      {(isNumeric ? numericOperators : stringOperators).map(op => (
+                                        <MenuItem key={op.value} value={op.value}>{op.label}</MenuItem>
+                                      ))}
+                                    </Select>
+                                  </FormControl>
+                                </Grid>
+                                <Grid item xs={12} sm={filter.operator === 'between' ? 3 : 6}>
+                                  <TextField
+                                    fullWidth
+                                    label={filter.operator === 'between' ? 'Valor Inicial' : 'Valor'}
+                                    variant="outlined"
+                                    placeholder={placeholders[field]}
+                                    value={filter.value1}
+                                    onChange={(e) => handleFilterChange(field, 'value1', e.target.value)}
+                                    inputProps={ field === 'return_code' ? { maxLength: 4 } : {} }
+                                    InputLabelProps={{ shrink: true }}
+                                  />
+                                </Grid>
+                                {filter.operator === 'between' && (
+                                  <Grid item xs={12} sm={3}>
+                                    <TextField
+                                      fullWidth
+                                      label="Valor Final"
+                                      variant="outlined"
+                                      placeholder={placeholders[field]}
+                                      value={filter.value2}
+                                      onChange={(e) => handleFilterChange(field, 'value2', e.target.value)}
+                                      inputProps={ field === 'return_code' ? { maxLength: 4 } : {} }
+                                      InputLabelProps={{ shrink: true }}
+                                    />
+                                  </Grid>
+                                )}
+                              </React.Fragment>
+                            );
+                          })}
+                        </Grid>
+                      </AccordionDetails>
+                    </Accordion>
+                  </Box>
+                </Paper>
+              </Grid>
+
+              {/* Área dos Gráficos */}
+              <Grid item>
+                {isLoading ? (
+                  <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '50vh' }}>
+                    <CircularProgress color="primary" />
+                    <Typography sx={{ ml: 2 }}>Gerando gráficos, por favor aguarde...</Typography>
+                  </Box>
+                ) : error ? (
+                  <Alert severity="error" sx={{ mt: 2 }}>Não foi possível carregar os gráficos: {error}</Alert>
+                ) : hasSearched ? (
+                  <Grid container spacing={4}>
+                    {/* Gráfico de CPU */}
+                    <Grid item xs={12}>
+                      <Paper elevation={3} sx={{ p: 3 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                          <MemoryIcon color="primary" sx={{ mr: 1 }} />
+                          <Typography variant="h6">
+                            Consumo de CPU
+                          </Typography>
+                        </Box>
+                        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                          Histórico e previsão do tempo de processamento.
+                        </Typography>
+                        {chartCpuData ? (
+                          <Plot data={chartCpuData.data} layout={chartCpuData.layout} style={{ width: '100%', height: '500px' }} useResizeHandler={true} />
+                        ) : <Typography sx={{ p: 2 }}>Dados de CPU não disponíveis para os filtros selecionados.</Typography>}
+                      </Paper>
+                    </Grid>
+                    {/* Gráfico de Sala */}
+                    <Grid item xs={12}>
+                      <Paper elevation={3} sx={{ p: 3 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                          <TimelineIcon color="primary" sx={{ mr: 1 }} />
+                          <Typography variant="h6">
+                            Consumo de Tempo de Sala
+                          </Typography>
+                        </Box>
+                        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                          Histórico e previsão do tempo de permanência do job no sistema.
+                        </Typography>
+                        {chartSalaData ? (
+                          <Plot data={chartSalaData.data} layout={chartSalaData.layout} style={{ width: '100%', height: '500px' }} useResizeHandler={true} />
+                        ) : <Typography sx={{ p: 2 }}>Dados de Sala não disponíveis para os filtros selecionados.</Typography>}
+                      </Paper>
+                    </Grid>
+                    {/* Gráfico de Hora de Execução */}
+                    <Grid item xs={12}>
+                      <Paper elevation={3} sx={{ p: 3 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                          <AccessTimeIcon color="primary" sx={{ mr: 1 }} />
+                          <Typography variant="h6">
+                            Análise de Horário de Execução
+                          </Typography>
+                        </Box>
+                        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                          Histórico e previsão do horário de início das execuções.
+                        </Typography>
+                        {chartExecucaoData ? (
+                          <Plot data={chartExecucaoData.data} layout={chartExecucaoData.layout} style={{ width: '100%', height: '500px' }} useResizeHandler={true} />
+                        ) : <Typography sx={{ p: 2 }}>Dados de Hora de Execução não disponíveis para os filtros selecionados.</Typography>}
+                      </Paper>
+                    </Grid>
+                  </Grid>
+                ) : (
+                  <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '50vh', flexDirection: 'column', bgcolor: 'background.paper', borderRadius: 3, boxShadow: 1 }}>
+                    <Typography variant="h6" color="text.secondary">
+                      Aguardando análise
+                    </Typography>
+                    <Typography color="text.secondary">
+                      Preencha os campos e clique em "Analisar" para gerar os gráficos.
+                    </Typography>
+                  </Box>
+                )}
+              </Grid>
+            </Grid>
+          </Container>
+        </Box>
+      </LocalizationProvider>
+    </ThemeProvider>
+  );
+};
+
+export default AnalisePerformancePage;
