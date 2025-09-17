@@ -1,7 +1,7 @@
 # app.py
 
 import pandas as pd
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 from flask_cors import CORS
 import plotly.graph_objects as go
 import plotly.io as pio
@@ -14,8 +14,23 @@ import traceback
 from chronos import ChronosPipeline
 import timesfm
 import ruptures as rpt
-from tirex import load_model as load_tirex_model, ForecastModel as TirexForecastModel # NOVO: Importa o TiRex
+from tirex.base import load_model as load_tirex_model
+from tirex.api_adapter.forecast import ForecastModel as TirexForecastModel
+import ssl # Adicione este import
+from datetime import datetime
 
+# ======================================================================
+# INÍCIO DO BLOCO PARA FORÇAR A IGNORAR A VERIFICAÇÃO SSL
+# ======================================================================
+try:
+    _create_unverified_https_context = ssl._create_unverified_context
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context
+# ======================================================================
+# FIM DO BLOCO
+# ======================================================================
 # Ignora avisos comuns para uma saída mais limpa
 warnings.filterwarnings("ignore")
 
@@ -99,32 +114,68 @@ except Exception as e:
 # ---------------------------------------------------
 
 
-def carregar_dados_job(nome_job):
-    """Carrega e processa os dados de um job específico do arquivo JSON."""
-    try:
-        # Assume que dados_mock.json está na mesma pasta que app.py
-        df_full = pd.read_json('dados_mock.json')
-        df = df_full[df_full['nome_job'] == nome_job].copy()
+import requests # Adicionar esta importação no início do arquivo app.py
 
-        if df.empty:
+def carregar_dados_job(nome_job, data_inicio, qtde_dias):
+    """Carrega, transforma e processa os dados de um job específico a partir da API."""
+    # Parâmetros da URL agora são recebidos dinamicamente.
+    base_url = f"http://10.1.136.123:2601/nupro/ibm/api/v1/brb12/joblog/{nome_job}"
+    params = {
+        'f': 'json',
+        'data_inicio': data_inicio,
+        'qtde_dias': qtde_dias
+    }
+
+    try:
+        response = requests.get(base_url, params=params, timeout=15)
+        response.raise_for_status()  # Lança exceção para códigos de erro HTTP (4xx ou 5xx)
+        api_data = response.json()
+
+        job_records = api_data.get("recordset", {}).get(nome_job.upper(), {})
+        if not job_records:
+            print(f"Nenhum registro encontrado para o job '{nome_job.upper()}' na resposta da API.")
             return None
 
-        # Converte as colunas de tempo para número, transformando erros em 'NaN' (Not a Number)
-        df['TEMPO DE CPU'] = pd.to_numeric(
-            df['tempo_cpu'].str.replace(',', '.'), errors='coerce')
-        df['TEMPO DE SALA'] = pd.to_numeric(
-            df['tempo_sala'].str.replace(',', '.'), errors='coerce')
+        # Transforma os dados da API para o formato legado esperado
+        transformed_data = []
+        for job_id, details in job_records.items():
+            transformed_data.append({
+                "nome_job": details.get("jobname"),
+                "data_execucao": details.get("dataExecucao"),
+                "hora_execucao": details.get("horaExecucao", "").replace(":", "."),
+                "tempo_cpu": str(details.get("tempoCPU", "0")).replace(".", ","),
+                "tempo_sala": str(details.get("tempoSala", "0")).replace(".", ","),
+                "return_code": float(details.get("RC", "0")),
+                "usuario": details.get("usuario"),
+                "jobid": float(details.get("jobID", "0"))
+            })
+        
+        if not transformed_data:
+             return None
 
-        # Remove as linhas que resultaram em erro (agora são 'NaN')
+        df = pd.DataFrame(transformed_data)
+
+        # O restante do processamento permanece o mesmo
+        df['TEMPO DE CPU'] = pd.to_numeric(df['tempo_cpu'].str.replace(',', '.'), errors='coerce')
+        df['TEMPO DE SALA'] = pd.to_numeric(df['tempo_sala'].str.replace(',', '.'), errors='coerce')
         df.dropna(subset=['TEMPO DE CPU', 'TEMPO DE SALA'], inplace=True)
+        
         df['TIMESTAMP'] = pd.to_datetime(
-            df['data_execucao'] + ' ' + df['hora_execucao'], format='%d/%m/%Y %H.%M.%S')
-        # Converte hora_execucao (formato HH.MM.SS) para minutos totais de execução
+            df['data_execucao'] + ' ' + df['hora_execucao'], format='%d/%m/%Y %H.%M.%S', errors='coerce'
+        )
+        df.dropna(subset=['TIMESTAMP'], inplace=True)
+
         hora_parts = df['hora_execucao'].str.split('.', expand=True)
         df['MINUTOS_EXECUCAO'] = hora_parts[0].astype(int) * 60 + hora_parts[1].astype(int) + hora_parts[2].astype(int) / 60
+        
         df = df.sort_values(by='TIMESTAMP').reset_index(drop=True)
         return df
-    except FileNotFoundError:
+
+    except requests.exceptions.RequestException as e:
+        print(f"Erro de rede ao buscar dados para o job '{nome_job}': {e}")
+        return None
+    except (ValueError, KeyError) as e:
+        print(f"Erro ao processar o JSON da API para o job '{nome_job}': {e}")
         return None
 
 
@@ -382,15 +433,118 @@ def gerar_previsao_tirex(contexto_historico, prediction_length=7, num_samples=10
         return nan_array, nan_array, nan_array
 # --- FIM DA NOVA FUNÇÃO ---
 
+def aplicar_filtros_avancados(df, args):
+    """Aplica filtros dinâmicos a um DataFrame com base nos query parameters da requisição."""
+    if df.empty:
+        return df
+
+    # Mapeia o nome do filtro na URL para o nome da coluna no DataFrame
+    mapa_filtros = {
+        'hora_execucao': 'MINUTOS_EXECUCAO',
+        'tempo_cpu': 'TEMPO DE CPU',
+        'tempo_sala': 'TEMPO DE SALA',
+        'return_code': 'return_code',
+        'usuario': 'usuario'
+    }
+
+    df_filtrado = df.copy()
+
+    for key, value in args.items():
+        if not key.startswith('filter_'):
+            continue
+
+        try:
+            # Extrai o campo, operador e valor(es) do parâmetro
+            campo = key.split('_', 1)[1]
+            operador, valor_str = value.split(':', 1)
+            
+            if campo not in mapa_filtros:
+                continue
+            
+            coluna = mapa_filtros[campo]
+
+            # Converte os valores para os tipos corretos
+            if campo == 'usuario':
+                valor1 = valor_str
+            elif campo == 'hora_execucao':
+                # Converte HH:MM:SS para minutos totais
+                parts = valor_str.split(',')
+                h, m, s = map(int, parts[0].split(':'))
+                valor1 = h * 60 + m + s / 60
+                if operador == 'between' and len(parts) > 1:
+                    h, m, s = map(int, parts[1].split(':'))
+                    valor2 = h * 60 + m + s / 60
+            else: # Campos numéricos (cpu, sala, rc)
+                parts = valor_str.split(',')
+                valor1 = float(parts[0])
+                if operador == 'between' and len(parts) > 1:
+                    valor2 = float(parts[1])
+
+            # Aplica o filtro correspondente ao operador
+            if operador == 'eq':
+                df_filtrado = df_filtrado[df_filtrado[coluna] == valor1]
+            elif operador == 'ne':
+                df_filtrado = df_filtrado[df_filtrado[coluna] != valor1]
+            elif operador == 'lt' and campo != 'usuario':
+                df_filtrado = df_filtrado[df_filtrado[coluna] < valor1]
+            elif operador == 'le' and campo != 'usuario':
+                df_filtrado = df_filtrado[df_filtrado[coluna] <= valor1]
+            elif operador == 'gt' and campo != 'usuario':
+                df_filtrado = df_filtrado[df_filtrado[coluna] > valor1]
+            elif operador == 'ge' and campo != 'usuario':
+                df_filtrado = df_filtrado[df_filtrado[coluna] >= valor1]
+            elif operador == 'between' and campo != 'usuario':
+                df_filtrado = df_filtrado[df_filtrado[coluna].between(valor1, valor2)]
+
+        except (ValueError, IndexError) as e:
+            print(f"AVISO: Ignorando filtro malformado '{key}={value}'. Erro: {e}")
+            continue
+            
+    return df_filtrado
+
 @app.route("/api/grafico/<tipo>/<nome_job>")
 def gerar_grafico_interativo(tipo, nome_job):
     """
-    Rota principal que gera e retorna o JSON de um gráfico interativo com previsão Prophet.
+    Rota principal que gera e retorna o JSON de um gráfico interativo com previsão.
+    Aceita 'data_inicio' e 'data_fim' (DD/MM/YYYY) como query parameters.
     """
-    df = carregar_dados_job(nome_job)
+    data_inicio_str = request.args.get('data_inicio')
+    data_fim_str = request.args.get('data_fim')
 
-    if df is None or len(df) < 5:
-        return jsonify({"erro": "Job não encontrado ou dados insuficientes."}), 404
+    # Validação de parâmetros de entrada
+    if not data_inicio_str or not data_fim_str:
+        return jsonify({"erro": "Os parâmetros 'data_inicio' e 'data_fim' são obrigatórios."}), 400
+
+    try:
+        # Converte as strings para objetos datetime
+        start_date = datetime.strptime(data_inicio_str, '%d/%m/%Y')
+        end_date = datetime.strptime(data_fim_str, '%d/%m/%Y')
+
+        # Garante que a data final não seja anterior à inicial
+        if end_date < start_date:
+            return jsonify({"erro": "A 'data_fim' não pode ser anterior à 'data_inicio'."}), 400
+
+        # Calcula a diferença de dias (inclusivo)
+        delta = end_date - start_date
+        qtde_dias = delta.days + 1
+
+        # Impõe um limite máximo para evitar sobrecarga
+        qtde_dias = min(qtde_dias, 365)
+
+    except ValueError:
+        return jsonify({"erro": "Formato de data inválido. Use DD/MM/YYYY."}), 400
+
+    df_bruto = carregar_dados_job(nome_job, data_inicio_str, qtde_dias)
+
+    if df_bruto is None:
+        return jsonify({"erro": f"Job '{nome_job}' não encontrado para o período selecionado."}), 404
+    
+    # --- APLICAÇÃO DOS FILTROS AVANÇADOS ---
+    df = aplicar_filtros_avancados(df_bruto, request.args)
+    # ----------------------------------------
+
+    if df.empty or len(df) < 5:
+        return jsonify({"erro": f"Dados insuficientes para o job '{nome_job}' após a aplicação dos filtros."}), 404
 
     # Define qual coluna usar com base no tipo de gráfico solicitado
     mapa_colunas = {
